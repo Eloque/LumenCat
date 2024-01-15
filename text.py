@@ -1,3 +1,5 @@
+# Convert text to SVG paths
+
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
@@ -58,14 +60,10 @@ def text_to_svg_path(text, font_path, font_size, start_x=0, start_y=0):
         # Get the path
         path = pen.getCommands()
 
-        # Add the path to the list
-        svg_paths.append(path)
+        # Add the path to the list, as an SVG element
+        svg_paths.append(f"<path d='{path}' />")
 
         # Update the current x position based on the glyph's advance width
         current_x += glyph.width
 
     return svg_paths
-
-
-
-

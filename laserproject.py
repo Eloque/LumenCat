@@ -3,15 +3,34 @@
 # This means that the class is en essence a list of SVG objects with a speed and power
 
 # That would mean that there should be a class for SVG objects
-
 import xml.etree.ElementTree as elementTree
+from text import text_to_svg_path
+from curvetopoints import quadratic_bezier
+import re
 
 # LaserProject is a collection of LaserObjects
 class LaserProject:
     def __init__(self):
         self.laser_objects = []
+        self.shapes_as_points = None
+        self.gcode = None
+        self.gcode_header = None
 
-    def get_gcode(self):
+    # Helper function, get a string representation of the SVG
+    def get_svg(self):
+
+        for laserObject in self.laser_objects:
+
+            svg = laserObject.get_svg_element()
+
+            if type(svg) is list:
+                for item in svg:
+                    print(item)
+
+            else:
+                print(svg)
+
+    def get_gcode_header(self):
 
         # Create empty gcode list
         gcode = []
@@ -30,14 +49,69 @@ class LaserProject:
         gcode.append("; constant power mode, but turned off")
         gcode.append("M4 S0")
 
+        self.gcode_header = gcode
+
+        return self.gcode_header
+
+    # Convert all the laser objects to points, prior to converting to gcode
+    def get_all_shapes_as_points(self):
+
+        # Create empty list
+        self.shapes_as_points = []
+
         # Go through the laser objects
         for laser_object in self.laser_objects:
 
-            # Get the gcode for the laser object
-            object_gcode = laser_object.get_gcode()
+            # Get the points for the object
+            object_points = laser_object.get_shape_as_points()
 
-            # Add the gcode to the list
-            gcode.extend(object_gcode)
+            # Add the points to the list
+            self.shapes_as_points.append(object_points)
+
+        # Return the list
+        return self.shapes_as_points
+
+
+    def get_gcode(self):
+
+        # Get all the shapes as
+        self.get_all_shapes_as_points()
+        # Account for the fact that the Y axis is inverted
+        self.invert_points()
+
+        header = self.get_gcode_header()
+        gcode = []
+
+        gcode.extend(header)
+
+        # Go through the laser objects
+        for shape in self.shapes_as_points:
+
+            # Get the gcode for the laser object
+            for points in shape["points"]:
+
+                speed = f"F{shape["speed"]}"
+                power = f"S{shape["power"]}"
+
+                shape_gcode = convert_points_to_gcode(points)
+                start_gcode = shape_gcode.pop(0)
+
+                gcode.append("; Shape start")
+                gcode.append("; Turn laser off, go to start position")
+                gcode.append("M5")
+                gcode.append(start_gcode)
+
+                # Turn the laser on
+                gcode.append("; Turn laser on")
+                gcode.append("M4")
+
+                # Set the speed and power
+                gcode.append("; Set speed and power")
+                gcode.append(speed)
+                gcode.append(power)
+
+                # Add the gcode to the list
+                gcode.extend(shape_gcode)
 
         # Add the footer
         gcode.append("; All done, turn laser off")
@@ -50,113 +124,248 @@ class LaserProject:
         # Return the gcode
         return gcode
 
+    # Do simple, crude inversion of the Y axis
+    def invert_points(self):
+
+        # Add all the points in all the shapes to a list
+        all_points = []
+
+        for shape in self.shapes_as_points:
+            for point_list in shape["points"]:
+                all_points.extend(point_list)
+
+        # We now have all the points
+        # Find the maximum y
+        max_y = 0
+
+        for point in all_points:
+            if point[1] > max_y:
+                max_y = point[1]
+
+        # Now we have the maximum y and we can invert the points
+        for shape in self.shapes_as_points:
+            for point_list in shape["points"]:
+                for point in point_list:
+                    point[1] = max_y - point[1]
+
+        return self.shapes_as_points
+
+
 # A LaserObject is an SVG object, that can be converted to GCode
+# It is a path object, or needs conversion to a path object first
 class LaserObject:
 
-    def __init__(self, svg_element, speed, power):
+    def __init__(self, speed, power, svg_element = None):
         self.svg_element = svg_element
         self.speed = speed
         self.power = power
         self.path = None
+        self.points = None
 
-    def extract_path(self):
+        self.shape_gcode = None
+
+    def get_path(self):
         # We have an SVG element, it is already unpacked
         # So the root should contain the data
 
         root = elementTree.fromstring(self.svg_element)
-
         try:
 
             path = root.attrib["d"]
-
-            # The gcode for the shape is
-            shape_gcode = convert_path_to_gcode(path)
-
-            # And return it
-            return shape_gcode
+            return path
 
         except elementTree.ParseError:
             # Raise an error maybe
             pass
 
-    def get_gcode(self):
+    def get_svg_element(self):
 
-        # Create empty gcode list
-        gcode = []
+        return self.svg_element
 
-        # Get the settings
-        speed = f"F{self.speed}"
-        power = f"S{self.power}"
+    def convert_to_points(self):
 
-        # Get the gcode
-        shape_gcode = self.extract_path()
+        # The whole shape is a list of points
+        # Each point is tuple of 2 elements, x and y
+        self.path = self.get_path()
+        self.points = convert_path_to_points(self.path)
 
-        # Get the first item from the list, that is the start of the shape
-        # Remove that item from the list as well
-        start_gcode = shape_gcode.pop(0)
+        return self.points
 
-        gcode.append("; Shape start")
-        gcode.append("; Turn laser off, go to start position")
-        gcode.append("M5")
-        gcode.append(start_gcode)
+    def get_shape_as_points(self):
 
-        # Set the speed and power
-        gcode.append("; Set speed and power")
-        gcode.append(speed)
-        gcode.append(power)
+        # This will return a list
+        # It will contain the speed, the power and the points as a list
 
-        # Go through the shape gcode
-        while shape_gcode:
-            # Get the next gcode
-            next_gcode = shape_gcode.pop(0)
+        # Get the points
+        self.convert_to_points()
 
-            # Add it to the list
-            gcode.append(next_gcode)
+        points_list = list()
+        points_list.append(self.points)
 
-        # Return the list
+        return { "speed": self.speed, "power": self.power, "points": points_list}
 
-        return gcode
+    def convert_to_gcode(self):
 
-        
-# function to convert SVG path to GCode
-def convert_path_to_gcode(path):
+        self.shape_gcode = convert_points_to_gcode(self.points)
 
-    # split the path into its components
-    components = path.split(" ")
+        return self.shape_gcode
 
-    # create gcode list
-    gcode = []
+
+# A derived class for Text objects, based on LaserObject
+class LaserTextObject(LaserObject):
+
+    # This class has a font size, text and font
+    def __init__(self, text, font, font_size, speed, power):
+        self.text = text
+        self.font = font
+        self.font_size = font_size
+
+        # Call the parent constructor
+        super().__init__(speed, power)
+
+
+    # Override the get_shape_as_points method
+    # This will represent the text as a list of points, but accounting for the fact
+    # that a text object has multiple letters
+    def get_shape_as_points(self):
+
+        points_list = list()
+
+        # Convert the text to a list of SVG paths
+        letter_paths = text_to_svg_path(self.text, self.font, self.font_size)
+
+        for letter_path in letter_paths:
+            # Create a LaserObject
+            letter_object = LaserObject(self.speed, self.power, letter_path)
+
+            # Get the shape as points
+            letter_shape_as_points = letter_object.get_shape_as_points()
+
+            # Add it to the list, unpack that list i guess
+            points_list.append(letter_shape_as_points["points"][0])
+
+        return {"speed": self.speed, "power": self.power, "points": points_list}
+
+    def get_svg_element(self):
+
+        letter_paths = text_to_svg_path(self.text, self.font, self.font_size)
+        return letter_paths
+
+
+def convert_path_to_points(path):
+    # Regex pattern to match path commands and their parameters
+    pattern = r'([MLCQAZHVmlcqazhv][^MLCQAZHVmlcqazhv]*)'
+    components = re.findall(pattern, path)
+
+    # create point list
+    points = []
+
+    # We need the start coordinates, so we can go back to them
+    # We will get them from the first component
+    # We will remove the first component from the list as well
+    first_command = components[0]
+    start_coordinates = re.split(r'[ ,]+', first_command[1:])
+
+    start_coordinates = start_coordinates[:2]
+    current_coordinates = start_coordinates
 
     # go through each component
     for item in components:
 
         # we will check what type of component it is
         if item[0] == "M":
-            # this is a move command, G0
+            # this is a move command, and the first command
             # get the coordinates
-            coordinates = item[1:].split(",")
+            coordinates = re.split(r'[ ,]+', item[1:])
 
-            gcode.append("G0 " + "X" + coordinates[0] + " Y" + coordinates[1])
+            # Track the current coordinates
+            current_coordinates = coordinates[:2]
+
+            # Add the coordinates to the list, as a tuple
+            points.append(list(current_coordinates))
 
         if item[0] == "H":
-            # this is a horizontal line command, G1
+            # this is a horizontal line command
             # get the x coordinate
             x = item[1:]
 
-            gcode.append("G1 " + "X" + x)
+            # Track the current coordinates, only update X
+            current_coordinates[0] = x
+
+            points.append(list(current_coordinates))
 
         if item[0] == "V":
-            # this is a vertical line command, G1
+            # this is a vertical line command
             # get the y coordinate
             y = item[1:]
 
-            gcode.append("G1 " + "Y" + y)
+            # Track the current coordinates, only update Y
+            current_coordinates[1] = y
+            points.append(list(current_coordinates))
 
         if item[0] == "L":
-            # this is a line command, G1
+            # this is a line command
             # get the coordinates
-            coordinates = item[1:].split(",")
+            coordinates = re.split(r'[ ,]+', item[1:])
 
-            gcode.append("G1 " + "X" + coordinates[0] + " Y" + coordinates[1])
+            # Track the current coordinates
+            current_coordinates = coordinates[:2]
+
+            points.append(list(current_coordinates))
+
+        if item[0] == "Q":
+
+            coordinates = re.split(r'[ ,]+', item[1:])
+            control_coordinates = coordinates[0:2]
+            end_coordinates = coordinates[2:4]
+
+            # convert all the coordinates to floats
+            current_coordinates = [float(i) for i in current_coordinates]
+            control_coordinates = [float(i) for i in control_coordinates]
+            end_coordinates = [float(i) for i in end_coordinates]
+
+            bezier_points = quadratic_bezier(current_coordinates, control_coordinates, end_coordinates, 3)
+
+            for bezier_point in bezier_points:
+                points.append(list(bezier_point))
+
+            current_coordinates = end_coordinates
+
+        if item[0] == "Z":
+
+            # We are at end for this path, maybe we should do something return for debug
+            points.append(list(start_coordinates))
+
+            # convert all the points to floats
+            points = [[float(i) for i in point] for point in points]
+
+            return points
+
+    # convert all the points to floats
+    points = [[float(i) for i in point] for point in points]
+
+    return points
+
+# function to convert SVG path to GCode
+def convert_points_to_gcode(points):
+
+    # create gcode list
+    gcode = []
+
+    # Get the first item from the list, that is the start of the shape
+    # Remove that item from the list as well
+    start_coordinates = points.pop(0)
+    gcode.append(f"G0 X{start_coordinates[0]} Y{start_coordinates[1]}")
+
+    # We need to make sure that all the items in points, are strings
+    points = [[str(i) for i in point] for point in points]
+
+    # go through each component
+    # At this point, we only have to deal with lines
+    for item in points:
+
+        # get the coordinates
+        gcode.append("G1 " + "X" + item[0] + " Y" + item[1])
 
     return gcode
+
