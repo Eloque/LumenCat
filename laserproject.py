@@ -16,6 +16,8 @@ class LaserProject:
         self.gcode = None
         self.gcode_header = None
 
+        self.laser_mode = "M4" # M4 is constant power mode, M3 is PWM mode
+
     # Helper function, get a string representation of the SVG
     def get_svg(self):
 
@@ -33,7 +35,7 @@ class LaserProject:
     def get_gcode_header(self):
 
         # Create empty gcode list
-        gcode = []
+        gcode = list()
 
         # Add the header
         gcode.append("; gCode created by LumenCat")
@@ -47,7 +49,7 @@ class LaserProject:
         gcode.append("G17 G40 G54 G94")
 
         gcode.append("; constant power mode, but turned off")
-        gcode.append("M4 S0")
+        gcode.append(f"{self.laser_mode} S0")
 
         self.gcode_header = gcode
 
@@ -87,31 +89,31 @@ class LaserProject:
         # Go through the laser objects
         for shape in self.shapes_as_points:
 
-            # Get the gcode for the laser object
-            for points in shape["points"]:
+            for point_list in shape["points"]:
+                for points in point_list:
 
-                speed = f"F{shape["speed"]}"
-                power = f"S{shape["power"]}"
+                    speed = f"F{shape["speed"]}"
+                    power = f"S{shape["power"]}"
 
-                shape_gcode = convert_points_to_gcode(points)
-                start_gcode = shape_gcode.pop(0)
+                    shape_gcode = convert_points_to_gcode(points)
+                    start_gcode = shape_gcode.pop(0)
 
-                gcode.append("; Shape start")
-                gcode.append("; Turn laser off, go to start position")
-                gcode.append("M5")
-                gcode.append(start_gcode)
+                    gcode.append("; Shape start")
+                    gcode.append("; Turn laser off, go to start position")
+                    gcode.append("M5")
+                    gcode.append(start_gcode)
 
-                # Turn the laser on
-                gcode.append("; Turn laser on")
-                gcode.append("M4")
+                    # Turn the laser on
+                    gcode.append("; Turn laser on")
+                    gcode.append(self.laser_mode)
 
-                # Set the speed and power
-                gcode.append("; Set speed and power")
-                gcode.append(speed)
-                gcode.append(power)
+                    # Set the speed and power
+                    gcode.append("; Set speed and power")
+                    gcode.append(speed)
+                    gcode.append(power)
 
-                # Add the gcode to the list
-                gcode.extend(shape_gcode)
+                    # Add the gcode to the list
+                    gcode.extend(shape_gcode)
 
         # Add the footer
         gcode.append("; All done, turn laser off")
@@ -132,7 +134,8 @@ class LaserProject:
 
         for shape in self.shapes_as_points:
             for point_list in shape["points"]:
-                all_points.extend(point_list)
+                for points in point_list:
+                    all_points.extend(points)
 
         # We now have all the points
         # Find the maximum y
@@ -144,9 +147,10 @@ class LaserProject:
 
         # Now we have the maximum y and we can invert the points
         for shape in self.shapes_as_points:
-            for point_list in shape["points"]:
-                for point in point_list:
-                    point[1] = max_y - point[1]
+            for points in shape["points"]:
+                for point_list in points:
+                    for point in point_list:
+                        point[1] = max_y - point[1]
 
         return self.shapes_as_points
 
@@ -260,6 +264,9 @@ def convert_path_to_points(path):
     # create point list
     points = []
 
+    # Return list
+    return_list = []
+
     # We need the start coordinates, so we can go back to them
     # We will get them from the first component
     # We will remove the first component from the list as well
@@ -281,7 +288,10 @@ def convert_path_to_points(path):
             # Track the current coordinates
             current_coordinates = coordinates[:2]
 
-            # Add the coordinates to the list, as a tuple
+            # Also, the start coordinates
+            start_coordinates = coordinates[:2]
+
+            # Add the coordinates to the list
             points.append(list(current_coordinates))
 
         if item[0] == "H":
@@ -313,6 +323,15 @@ def convert_path_to_points(path):
 
             points.append(list(current_coordinates))
 
+        if item[0] == "C":
+            # This is a circle command
+            # get the coordinates
+            coordinates = re.split(r'[ ,]+', item[1:])
+
+            # Track the current coordinates
+            current_coordinates = coordinates[4:6]
+
+
         if item[0] == "Q":
 
             coordinates = re.split(r'[ ,]+', item[1:])
@@ -339,12 +358,13 @@ def convert_path_to_points(path):
             # convert all the points to floats
             points = [[float(i) for i in point] for point in points]
 
-            return points
+            # add the points to the return list
+            return_list.append(points)
 
-    # convert all the points to floats
-    points = [[float(i) for i in point] for point in points]
+            # clear the points list
+            points = []
 
-    return points
+    return return_list
 
 # function to convert SVG path to GCode
 def convert_points_to_gcode(points):
