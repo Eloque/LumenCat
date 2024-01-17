@@ -19,7 +19,24 @@ class LaserProject:
         self.laser_mode = "M4" # M4 is constant power mode, M3 is PWM mode
 
     # Helper function, get a string representation of the SVG
+
+    def load_from_svg_file(self, filename):
+
+        # Open the file
+        with open(filename, "r") as file:
+            # Read the file
+            svg = file.read()
+
+            # Now we have the svg, we can parse it
+            print(svg)
+
+        return svg
+
     def get_svg(self):
+
+        # First the header
+        print('<?xml version="1.0" encoding="UTF-8"?>')
+        print('<svg width="100%" height="100%" version="1.1" xmlns="http://www.w3.org/2000/svg">')
 
         for laserObject in self.laser_objects:
 
@@ -31,6 +48,8 @@ class LaserProject:
 
             else:
                 print(svg)
+
+        print("</svg>")
 
     def get_gcode_header(self):
 
