@@ -1,6 +1,7 @@
-import tkinter
-import tkinter.messagebox
 import customtkinter
+
+from tkinter import filedialog
+from laserproject import LaserProject
 
 customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -40,9 +41,14 @@ class App(customtkinter.CTk):
         label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
         self.control_bar.grid(row=0, column=3, rowspan=2, sticky="nsew")
-        self.main_button_1 = customtkinter.CTkButton(master=self.control_bar, text="Load File", fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"))
-        #self.main_button_1.grid(row=0, column=0, padx=(20, 20), pady=(20, 20), sticky="nsew")
-        self.main_button_1.grid(row=1, column=0, padx=20, pady=10)
+        self.button_load_file = customtkinter.CTkButton(master=self.control_bar,
+                                                        command = self.button_load_file_event,
+                                                        text="Load File",
+                                                        fg_color="transparent",
+                                                        border_width=2,
+                                                        text_color=("gray10", "#DCE4EE"))
+        self.button_load_file.grid(row=1, column=0, padx=20, pady=10)
+        ## self.button_load_file.bind()
 
         # create main canvas frame
         self.main_frame = customtkinter.CTkFrame(self, corner_radius=0)
@@ -53,6 +59,17 @@ class App(customtkinter.CTk):
     @staticmethod
     def change_appearance_mode_event(new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
+
+    def button_load_file_event(self):
+
+        # Create filedialog
+        filename = filedialog.askopenfilename(initialdir="/", title="Select file",
+                                                filetypes=(("svg files", "*.svg"), ("all files", "*.*")))
+
+        # Create LaserProject
+        laserproject = LaserProject()
+        laserproject.load_from_svg_file(filename)
+
 
     def sidebar_button_event(self):
         print("sidebar_button click")
