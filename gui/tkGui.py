@@ -1,10 +1,12 @@
 import os
 
 import customtkinter
+from CTkXYFrame import *
 
 from tkinter import filedialog
 import tkinter as tk
 from laserproject import LaserProject
+
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -64,41 +66,73 @@ class App(customtkinter.CTk):
         self.button_load_test.grid(row=2, column=0, padx=20, pady=10)
 
         self.button_load_test = customtkinter.CTkButton(master=self.control_bar,
-                                                        command = self.button_render_event,
+                                                        command = self.rescale,
                                                         text="Render",
                                                         fg_color="transparent",
                                                         border_width=2,
                                                         text_color=("gray10", "#DCE4EE"))
         self.button_load_test.grid(row=3, column=0, padx=20, pady=10)
 
+        self.button_resize_canvas = customtkinter.CTkButton(master=self.control_bar,
+                                                        command = self.fit_canvas_to_frame,
+                                                        text="Resize Canvas",
+                                                        fg_color="transparent",
+                                                        border_width=2,
+                                                        text_color=("gray10", "#DCE4EE"))
+        self.button_resize_canvas.grid(row=4, column=0, padx=20, pady=10)
+
+        self.button_resize_canvas = customtkinter.CTkButton(master=self.control_bar,
+                                                        command = self.move_canvas_to_origin,
+                                                        text="Move Canvas",
+                                                        fg_color="transparent",
+                                                        border_width=2,
+                                                        text_color=("gray10", "#DCE4EE"))
+        self.button_resize_canvas.grid(row=5, column=0, padx=20, pady=10)
+
+        self.button_resize_canvas = customtkinter.CTkButton(master=self.control_bar,
+                                                        command = self.draw_all_elements,
+                                                        text="Draw Control Elements",
+                                                        fg_color="transparent",
+                                                        border_width=2,
+                                                        text_color=("gray10", "#DCE4EE"))
+        self.button_resize_canvas.grid(row=6, column=0, padx=20, pady=10)
+
+
 
         # create main canvas frame
-        self.main_frame = customtkinter.CTkFrame(self, corner_radius=0)
-        self.main_frame.bind("<Configure>", self.on_configure)
+        self.main_frame = CTkXYFrame(self, width=600, height=600, corner_radius=0)
+        self.main_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
 
-        # Create a standard Tkinter canvas inside the CTkFrame
-        self.canvas = tk.Canvas(self.main_frame, bg="white")
-        self.canvas.pack(fill="both", expand=True)
 
-        self.main_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew", rowspan=2)
         self.appearance_mode_optionemenu.set("System")
 
-        # On the canvas draw a rectangle, from 0,0 to 500,500
-        self.canvas.create_rectangle(0, 0, 400, 400)
+        # Create a standard Tkinter canvas inside the CTkFrame
+        # Make it scrollable, and bedsize + 2 x offset
+        self.bed_size = 400
+        self.offset = 10
+        self.scale_factor = 8
 
-        # Also, draw a dot every 10 pixels
-        for i in range(0, 400, 10):
-            self.canvas.create_line(i, 0, i, 400, fill="gray")
-            self.canvas.create_line(0, i, 400, i, fill="gray")
+        # self.canvas = tk.Canvas(self.main_frame, bg="white", width=self.bed_size + self.offset * 2, height=self.bed_size + self.offset * 2)
+        self.canvas = tk.Canvas(self.main_frame,
+                                bg="white",
+                                width=( self.bed_size * self.scale_factor) + self.offset * 2,
+                                height=( self.bed_size * self.scale_factor) + self.offset * 2
+                                )
+        self.canvas.pack()
 
-        self.scale_factor = 1
+        # Create a scrollbar for the canvas
+
+        # Wait some time, so the window can be moved
+        self.after(100, self.draw_all_elements)
+        # self.after(100, self.move_canvas_to_origin)
+
 
         # Move to the second screen for dev reasons
         # This is a dirty hack, to work around WSL2 tomfoolery
         self.geometry(f"+2900+100")
 
     def on_configure(self, event):
-        self.rescale()
+        pass
 
     @staticmethod
     def change_appearance_mode_event(new_appearance_mode: str):
@@ -124,9 +158,57 @@ class App(customtkinter.CTk):
         self.laser_project = LaserProject()
         self.laser_project.load_test_project()
 
+        # And draw it
+        self.draw_all_elements()
+
     def button_render_event(self):
 
-        self.canvas.scale("all", 0, 0, 1, 1)
+        self.draw_all_elements()
+
+    def draw_all_elements(self):
+
+        # Clear the canvas
+        self.canvas.delete("all")
+
+        # Draw the control elements
+        self.draw_control_elements()
+
+        # Check if the laser project is loaded
+        if self.laser_project is None:
+            pass
+        else:
+            self.draw_laser_project()
+
+        # take all the items of the canvas, and move them by offset
+        self.canvas.move("all", self.offset, self.offset)
+
+        # Apply the current scaling
+        # self.canvas.scale("all", 0, 0, self.scale_factor, self.scale_factor)
+
+    def draw_control_elements(self):
+
+        # Put a dot at every 25 mm
+        spacing = 25
+        radius = 1
+
+        for x in range(0, self.bed_size + spacing, spacing):
+            for y in range(0, self.bed_size + spacing, spacing):
+                item = self.canvas.create_oval(x - radius,
+                                        y - radius,
+                                        x + radius,
+                                        y + radius, outline="black", fill="black")
+
+                # now scale the item created
+                self.canvas.scale(item, 0, 0, self.scale_factor, self.scale_factor)
+
+        # Create the bed rectangle and scale it by scale factor
+        item = self.canvas.create_rectangle(0, 0, self.bed_size, self.bed_size)
+
+        # Only scale the rectangle
+        self.canvas.scale(item, 0, 0, self.scale_factor, self.scale_factor)
+
+
+    def draw_laser_project(self):
 
         # Get all the points from the svg
         shapes = self.laser_project.get_all_shapes_as_points()
@@ -141,21 +223,27 @@ class App(customtkinter.CTk):
 
                     for point in sections[1:]:
 
-                        self.canvas.create_line(current_point[0], current_point[1], point[0], point[1], fill="black")
+                        line = self.canvas.create_line(current_point[0], current_point[1], point[0], point[1], fill="black")
+                        self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
                         current_point = point
 
-        self.canvas.create_line(0, 0, 400,400, fill="black")
-        self.canvas.scale("all", 0, 0, self.scale_factor, self.scale_factor)
-
     def rescale(self):
-        # Get the current width of the canvas parent frame
-        width = self.main_frame.winfo_width()
 
-        # Calculate the scale factor
-        self.scale_factor = width / 400
+        gcode = self.laser_project.get_gcode()
+        for item in gcode:
+            print(item)
 
-        # And zoom in on the canvas, so the rectangle is the size of the canvas
-        self.canvas.scale("all", 0, 0, self.scale_factor, self.scale_factor)
+    def fit_canvas_to_frame(self):
+
+        pass
+
+    def move_canvas_to_origin(self):
+
+        # set the vsb in main_frame to max
+        self.main_frame.xy_canvas.yview_moveto(1.0)
+        self.main_frame.xy_canvas.xview_moveto(0.0)
+
+
 
     def sidebar_button_event(self):
         print("sidebar_button click")

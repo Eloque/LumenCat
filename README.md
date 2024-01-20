@@ -34,3 +34,12 @@ The LaserProject has functions to convert all the SVGs to points and the points 
 Al this relies on some external functions, including a way to convert text to glyps and beziers to lines. The latter one is only very lightly understood by me. Shame, I used to be good at math. 
 
 So, create a LaserProject, add LaserObjects and LaserTextObejects to it and call the get_gcode() function and it works. Sort of. Tests so far are looking good.
+
+# What did I use
+Open source is a wonderfull thing. But it is proper to refer to some things used:
+
+For the GUI, that most wonderfull and devastating invention I used:
+- https://github.com/TomSchimansky/CustomTkinter by @TomSchimansky
+- https://github.com/Akascape/CTkXYFrame by @Akascape
+
+

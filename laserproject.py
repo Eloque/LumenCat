@@ -20,7 +20,8 @@ class LaserProject:
 
     # Helper function, get a string representation of the SVG
 
-    def load_from_svg_file(self, filename):
+    @staticmethod
+    def load_from_svg_file(filename):
 
         # Open the file
         with open(filename, "r") as file:
@@ -66,9 +67,8 @@ class LaserProject:
         gcode.append("; move 'unit'/min")
 
         gcode.append("G17 G40 G54 G94")
-
-        gcode.append("; constant power mode, but turned off")
-        gcode.append(f"{self.laser_mode} S0")
+        gcode.append("; laser turned off")
+        gcode.append("M5")
 
         self.gcode_header = gcode
 
@@ -124,6 +124,7 @@ class LaserProject:
 
                     # Turn the laser on
                     gcode.append("; Turn laser on")
+                    gcode.append("; constant power mode, but turned off")
                     gcode.append(self.laser_mode)
 
                     # Set the speed and power
@@ -173,6 +174,26 @@ class LaserProject:
 
         return self.shapes_as_points
 
+    # Take some preconfigured paths and text, turn it
+    def load_test_project(self):
+
+        # Clear out the laser objects
+        self.laser_objects = []
+
+        # This the rectangle
+        element = '<path id="First" d="M10,10 H18 V23 H10 V10 Z"></path>'
+
+        laser_object = LaserObject(600, 250, element)
+        laser_object.svg_element = element
+
+        self.laser_objects.append(laser_object)
+
+        # This is the text
+        text = "Test"
+        laser_text_object = LaserTextObject(text, "./Ubuntu-R.ttf", 10, 600, 250)
+        self.laser_objects.append(laser_text_object)
+
+        pass
 
 # A LaserObject is an SVG object, that can be converted to GCode
 # It is a path object, or needs conversion to a path object first
@@ -264,7 +285,7 @@ class LaserTextObject(LaserObject):
             # Get the shape as points
             letter_shape_as_points = letter_object.get_shape_as_points()
 
-            # Add it to the list, unpack that list i guess
+            # Add it to the list, unpack that list I guess
             points_list.append(letter_shape_as_points["points"][0])
 
         return {"speed": self.speed, "power": self.power, "points": points_list}
