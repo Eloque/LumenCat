@@ -19,7 +19,6 @@ class LaserProject:
         self.laser_mode = "M4" # M4 is constant power mode, M3 is PWM mode
 
     # Helper function, get a string representation of the SVG
-
     @staticmethod
     def load_from_svg_file(filename):
 
@@ -149,6 +148,18 @@ class LaserProject:
     # Do simple, crude inversion of the Y axis
     def invert_points(self):
 
+        # Now we have the maximum y and we can invert the points
+        for shape in self.shapes_as_points:
+            for points in shape["points"]:
+                for point_list in points:
+                    for point in point_list:
+                        point[1] = max_y - point[1]
+
+        return self.shapes_as_points
+
+    # Take some preconfigured paths and text, turn it
+    def get_max_y(self):
+
         # Add all the points in all the shapes to a list
         all_points = []
 
@@ -165,16 +176,8 @@ class LaserProject:
             if point[1] > max_y:
                 max_y = point[1]
 
-        # Now we have the maximum y and we can invert the points
-        for shape in self.shapes_as_points:
-            for points in shape["points"]:
-                for point_list in points:
-                    for point in point_list:
-                        point[1] = max_y - point[1]
+        return max_y
 
-        return self.shapes_as_points
-
-    # Take some preconfigured paths and text, turn it
     def load_test_project(self):
 
         # Clear out the laser objects

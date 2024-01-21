@@ -124,7 +124,7 @@ class App(customtkinter.CTk):
 
         # Wait some time, so the window can be moved
         self.after(100, self.draw_all_elements)
-        # self.after(100, self.move_canvas_to_origin)
+        self.after(100, self.move_canvas_to_origin)
 
 
         # Move to the second screen for dev reasons
@@ -212,6 +212,20 @@ class App(customtkinter.CTk):
 
         # Get all the points from the svg
         shapes = self.laser_project.get_all_shapes_as_points()
+        max_y = self.laser_project.get_max_y()
+
+        # We now have the max Y, that becomes equal to the bed size
+        # All other points are move to this
+        displacement = self.bed_size - max_y
+
+        # compensate for the dread full fact that the canvas has a different Y axis
+        for shape in shapes:
+            for points in shape["points"]:
+                for point_list in points:
+                    for point in point_list:
+
+                        # Flip it around the Y axis
+                        point[1] = point[1] + displacement
 
         # Go through all the points
         for shape in shapes:
@@ -223,7 +237,9 @@ class App(customtkinter.CTk):
 
                     for point in sections[1:]:
 
-                        line = self.canvas.create_line(current_point[0], current_point[1], point[0], point[1], fill="black")
+                        line = self.canvas.create_line(current_point[0], current_point[1],
+                                                       point[0], point[1], fill="black")
+
                         self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
                         current_point = point
 
@@ -242,8 +258,6 @@ class App(customtkinter.CTk):
         # set the vsb in main_frame to max
         self.main_frame.xy_canvas.yview_moveto(1.0)
         self.main_frame.xy_canvas.xview_moveto(0.0)
-
-
 
     def sidebar_button_event(self):
         print("sidebar_button click")

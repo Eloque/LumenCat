@@ -39,7 +39,6 @@ So, create a LaserProject, add LaserObjects and LaserTextObejects to it and call
 Open source is a wonderfull thing. But it is proper to refer to some things used:
 
 For the GUI, that most wonderfull and devastating invention I used:
-- https://github.com/TomSchimansky/CustomTkinter by @TomSchimansky
-- https://github.com/Akascape/CTkXYFrame by @Akascape
-
+- https://github.com/TomSchimansky/CustomTkinter by [Purna TomSchimansky](https://github.com/TomSchimansky)
+- https://github.com/Akascape/CTkXYFrame by [@Akascape](https://github.com/Akascape)
 
