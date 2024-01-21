@@ -5,8 +5,7 @@ from CTkXYFrame import *
 
 from tkinter import filedialog
 import tkinter as tk
-from laserproject import LaserProject
-
+from laserproject import LaserProject, LaserObject, LaserTextObject
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -34,7 +33,7 @@ class App(customtkinter.CTk):
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="Tools", font=customtkinter.CTkFont(size=20, weight="bold"))
 
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
-        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Tool 1", command=self.sidebar_button_event)
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Triangle", command=self.create_triangle)
         self.sidebar_button_1.grid(row=1, column=0, padx=20, pady=10)
 
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
@@ -103,7 +102,6 @@ class App(customtkinter.CTk):
         self.main_frame = CTkXYFrame(self, width=600, height=600, corner_radius=0)
         self.main_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
 
-
         self.appearance_mode_optionemenu.set("System")
 
         # Create a standard Tkinter canvas inside the CTkFrame
@@ -161,6 +159,18 @@ class App(customtkinter.CTk):
         # And draw it
         self.draw_all_elements()
 
+        return
+
+        gcode = self.laser_project.get_gcode()
+
+        # open the op.nc file
+        with open("op.nc", "w") as f:
+            for item in gcode:
+                f.write(item + "\n")
+
+            # close the file again
+            f.close()
+
     def button_render_event(self):
 
         self.draw_all_elements()
@@ -187,9 +197,9 @@ class App(customtkinter.CTk):
 
     def draw_control_elements(self):
 
-        # Put a dot at every 25 mm
+        # # Put a dot at every 25 mm
         spacing = 25
-        radius = 1
+        radius = 0.1
 
         for x in range(0, self.bed_size + spacing, spacing):
             for y in range(0, self.bed_size + spacing, spacing):
@@ -201,16 +211,53 @@ class App(customtkinter.CTk):
                 # now scale the item created
                 self.canvas.scale(item, 0, 0, self.scale_factor, self.scale_factor)
 
-        # Create the bed rectangle and scale it by scale factor
-        item = self.canvas.create_rectangle(0, 0, self.bed_size, self.bed_size)
+        main_dash = 3
+        # draw a thin dotted line at every 25mm on the X and Y axis
+        for y in range(0, self.bed_size + spacing, spacing):
+            item = self.canvas.create_line(0, y, self.bed_size, y, dash=(main_dash, main_dash))
 
-        # Only scale the rectangle
-        self.canvas.scale(item, 0, 0, self.scale_factor, self.scale_factor)
+            # now scale the item created
+            self.canvas.scale(item, 0, 0, self.scale_factor, self.scale_factor)
 
+        for x in range(0, self.bed_size + spacing, spacing):
+            item = self.canvas.create_line(x, 0, x, self.bed_size, dash=(main_dash, main_dash))
+
+            # now scale the item created
+            self.canvas.scale(item, 0, 0, self.scale_factor, self.scale_factor)
 
     def draw_laser_project(self):
 
-        # Get all the points from the svg
+        # Get all shapes as process points
+        shapes = self.laser_project.get_all_shapes_as_process_points()
+
+        # At this point it is still cartesian coordinates
+        # We need to convert it to process points
+        # Consider that the bed size is set in self.bed_size
+        for shape in shapes:
+            for point_list in shape["points_lists"]:
+                for points in point_list:
+                    # Flip it around the Y axis
+                    points[1] = self.bed_size - points[1]
+
+        # And then draw it
+        # Go through all the points
+        for shape in shapes:
+            # And draw them on the canvas
+            for point_list in shape["points_lists"]:
+
+                current_point = point_list[-1]
+
+                for point in point_list:
+
+                    line = self.canvas.create_line(current_point[0], current_point[1],
+                                                   point[0], point[1], fill="black", width=3)
+
+                    self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
+                    current_point = point
+
+        return
+
+        # Get all the shapes
         shapes = self.laser_project.get_all_shapes_as_points()
         max_y = self.laser_project.get_max_y()
 
@@ -251,7 +298,25 @@ class App(customtkinter.CTk):
 
     def fit_canvas_to_frame(self):
 
-        pass
+        # lets try it here
+        laserTestObject = LaserTextObject("J", "./Ubuntu-R.ttf", 20, 600, 250)
+        points = laserTestObject.get_shape_as_points()
+        points = points[0]
+
+        laserTestObject.convert_process_to_cartesian(points)
+        points = laserTestObject.cartesian_points
+
+        # Convert each cartesian point to a process point.
+        # Consider that the bed size is set in self.bed_size
+        for point in points:
+            point[1] = self.bed_size - point[1]
+
+        start = points[-1]
+        for point in points:
+            line = self.canvas.create_line(start[0], start[1], point[0], point[1], fill="black")
+            self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
+            # self.canvas.scale(line, 0, 0, 1, -1)
+            start = point
 
     def move_canvas_to_origin(self):
 
@@ -259,8 +324,73 @@ class App(customtkinter.CTk):
         self.main_frame.xy_canvas.yview_moveto(1.0)
         self.main_frame.xy_canvas.xview_moveto(0.0)
 
-    def sidebar_button_event(self):
-        print("sidebar_button click")
+    def create_triangle(self):
+
+        # We are going to create a triangle with cartesion coordinates
+        # from 25,25 to 25,50 to 50,25
+
+        points = [[25, 25], [25, 50], [50, 25]]
+
+        # Convert each cartesian point to a process point.
+        # Consider that the bed size is set in self.bed_size
+        for point in points:
+            point[1] = self.bed_size - point[1]
+
+        # Does that mean it is now converated to a process point, and as such an SVG Path
+        # Print the svg path made from this
+        # Convert the points to a svg path
+        start = f"M {points[0][0]} {points[0][1]} "
+        line1 = f"L {points[1][0]} {points[1][1]} "
+        line2 = f"L {points[2][0]} {points[2][1]} "
+        line3 = f"L {points[0][0]} {points[0][1]} "
+        path = start + line1 + line2 + line3
+
+        print(path)
+
+
+        # And draw the lines, each in a different color
+        l = self.canvas.create_line(points[0][0], points[0][1], points[1][0], points[1][1], fill="red", width=2)
+        self.canvas.scale(l, 0, 0, self.scale_factor, self.scale_factor)
+        self.canvas.move(l, self.offset, self.offset)
+
+        l = self.canvas.create_line(points[1][0], points[1][1], points[2][0], points[2][1], fill="green", width=2)
+        self.canvas.scale(l, 0, 0, self.scale_factor, self.scale_factor)
+        self.canvas.move(l, self.offset, self.offset)
+
+        l = self.canvas.create_line(points[2][0], points[2][1], points[0][0], points[0][1], fill="blue", width=2)
+        self.canvas.scale(l, 0, 0, self.scale_factor, self.scale_factor)
+        self.canvas.move(l, self.offset, self.offset)
+
+        # Now, lets do it via the LaserObject with a square
+        # Create a LaserObject
+        laser_object = LaserObject(600,0)
+        laser_object.add_rectangle(25, 25, 25, 25)
+
+        # Get the process points
+        process_points = laser_object.process_points()
+
+        for point in process_points:
+            point[1] = self.bed_size - point[1]
+
+        # Draw the lines
+        l = self.canvas.create_line(process_points[0][0], process_points[0][1], process_points[1][0], process_points[1][1], fill="red", width=2)
+        self.canvas.scale(l, 0, 0, self.scale_factor, self.scale_factor)
+        self.canvas.move(l, self.offset, self.offset)
+
+        l = self.canvas.create_line(process_points[1][0], process_points[1][1], process_points[2][0], process_points[2][1], fill="green", width=2)
+        self.canvas.scale(l, 0, 0, self.scale_factor, self.scale_factor)
+        self.canvas.move(l, self.offset, self.offset)
+
+        l = self.canvas.create_line(process_points[2][0], process_points[2][1], process_points[3][0], process_points[3][1], fill="blue", width=2)
+        self.canvas.scale(l, 0, 0, self.scale_factor, self.scale_factor)
+        self.canvas.move(l, self.offset, self.offset)
+
+        l = self.canvas.create_line(process_points[3][0], process_points[3][1], process_points[0][0], process_points[0][1], fill="yellow", width=2)
+        self.canvas.scale(l, 0, 0, self.scale_factor, self.scale_factor)
+        self.canvas.move(l, self.offset, self.offset)
+
+
+
 
 
 if __name__ == "__main__":
