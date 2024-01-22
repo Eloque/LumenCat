@@ -42,3 +42,5 @@ For the GUI, that most wonderfull and devastating invention I used:
 - https://github.com/TomSchimansky/CustomTkinter by [Purna TomSchimansky](https://github.com/TomSchimansky)
 - https://github.com/Akascape/CTkXYFrame by [@Akascape](https://github.com/Akascape)
 
+For the fonts, I've used Google Fonts, note that not all fonts render the lowercase "d" correctly, but the two I've included do.
+Fonts licensed under SIL Open Font License: http://scripts.sil.org/OF

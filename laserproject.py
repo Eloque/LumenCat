@@ -233,9 +233,9 @@ class LaserProject:
         self.laser_objects.append(laser_object)
 
         # Add a test text object
-        text = "quick brown fox"
+        text = "db"
         # text = "j"
-        laser_text_object = LaserTextObject(text, "./Ubuntu-R.ttf", 30, 600, 250)
+        laser_text_object = LaserTextObject(text, "../fonts/Roboto-Regular.ttf", 30, 600, 250)
         laser_text_object.location = (25, 25)
         self.laser_objects.append(laser_text_object)
 
@@ -442,6 +442,9 @@ class LaserTextObject(LaserObject):
     # that a text object has multiple letters
     def get_shape_as_points(self):
 
+        # probably not need
+        raise NotImplementedError
+
         # Convert the text to a list of SVG paths
         letter_paths = text_to_svg_path(self.text, self.font, self.font_size)
 
@@ -454,6 +457,9 @@ class LaserTextObject(LaserObject):
             return letter_points
 
     def get_cartesian_points_as_lists(self):
+
+        # probably not need
+        raise NotImplementedError
 
         # This will return a copy of the list, so multiple point lists can be in the same shape
         # And it can be mutated without affecting the original
@@ -482,8 +488,6 @@ class LaserTextObject(LaserObject):
     # Then those pats, are converted to process points
     # And finally those process points are converted to cartesian points
     def get_process_points(self):
-
-        points_list = list()
 
         # Convert the text to a list of SVG paths
         letter_paths = text_to_svg_path(self.text, self.font, self.font_size)
@@ -615,7 +619,7 @@ def convert_path_to_points(path):
             control_coordinates = [float(i) for i in control_coordinates]
             end_coordinates = [float(i) for i in end_coordinates]
 
-            bezier_points = quadratic_bezier(current_coordinates, control_coordinates, end_coordinates, 3)
+            bezier_points = quadratic_bezier(current_coordinates, control_coordinates, end_coordinates)
 
             for bezier_point in bezier_points:
                 points.append(list(bezier_point))
