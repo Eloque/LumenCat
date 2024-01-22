@@ -233,7 +233,7 @@ class LaserProject:
         self.laser_objects.append(laser_object)
 
         # Add a test text object
-        text = "Test"
+        text = "quick brown fox"
         # text = "j"
         laser_text_object = LaserTextObject(text, "./Ubuntu-R.ttf", 30, 600, 250)
         laser_text_object.location = (25, 25)
@@ -505,19 +505,20 @@ class LaserTextObject(LaserObject):
             # And then get the process points for those
             shape_points = letter_object.get_process_points()
 
-            max_y = 0
-            for list_of_points in shape_points:
-                for point in list_of_points:
-                    if point[1] > max_y:
-                        max_y = point[1]
-
-            # Now we have the maximum y and we can invert the points
-            for list_of_points in shape_points:
-                for point in list_of_points:
-                    point[1] = max_y - point[1]
-
             # And extend the process points list
             process_points.extend(shape_points)
+
+        # Now we have the process points, we need to convert them to cartesian points
+        max_y = 0
+        for list_of_points in process_points:
+            for point in list_of_points:
+                if point[1] > max_y:
+                    max_y = point[1]
+
+        # Now we have the maximum y and we can invert the points
+        for list_of_points in process_points:
+            for point in list_of_points:
+                point[1] = max_y - point[1]
 
         return process_points
 
