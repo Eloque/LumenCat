@@ -111,6 +111,9 @@ class LaserProject:
 
     def get_all_shapes_as_process_points(self):
 
+        ## NOTE THIS IS STILL IN CARTESIAN COORDINATES
+        ## Update it to use process points later
+
         # Create empty list
         shapes_as_process_points = []
 
@@ -230,7 +233,7 @@ class LaserProject:
         self.laser_objects.append(laser_object)
 
         # Add a test text object
-        text = "e"
+        text = "Test"
         # text = "j"
         laser_text_object = LaserTextObject(text, "./Ubuntu-R.ttf", 30, 600, 250)
         laser_text_object.location = (25, 25)
@@ -281,6 +284,11 @@ class LaserObject:
     # This is a helper function, that will return the points in a proces point format
     # Currently without regard for max_y
     def get_process_points(self):
+
+        ## NOTE THIS IS STILL IN CARTESIAN COORDINATES
+        ## Update it to use process points later?
+        ## Or just use cartesian points, and to this somewhere else
+
         # Create empty list
         process_points = list()
 
@@ -497,15 +505,19 @@ class LaserTextObject(LaserObject):
             # And then get the process points for those
             shape_points = letter_object.get_process_points()
 
+            max_y = 0
+            for list_of_points in shape_points:
+                for point in list_of_points:
+                    if point[1] > max_y:
+                        max_y = point[1]
+
+            # Now we have the maximum y and we can invert the points
+            for list_of_points in shape_points:
+                for point in list_of_points:
+                    point[1] = max_y - point[1]
+
             # And extend the process points list
             process_points.extend(shape_points)
-
-            # And then convert those process points to cartesian points
-#            letter_object.convert_process_to_cartesian(letter_process_points["points"])
-            # And then get the process points
-#            letter_shape_as_points = letter_object.get_process_points()
-#           points_list.extend(letter_shape_as_points["points_lists"])
-#            process_points.append(shape_points)
 
         return process_points
 
@@ -648,3 +660,21 @@ def convert_points_to_gcode(points):
 
     return gcode
 
+# Helper function to covert a set of process points to cartesian points
+def convert_process_to_cartesian(points):
+
+    # These points are now upside down, flip them
+    # Now we have the maximum y and we can invert the points
+    max_y = 0
+    for list_of_points in points:
+        for point in list_of_points:
+            if point[1] > max_y:
+                max_y = point[1]
+
+    # Now we have the maximum y and we can invert the points
+    for list_of_points in points:
+        for point in list_of_points:
+            point[1] = max_y - point[1]
+
+    # They are now cartesian points, we need to convert them to process points
+    return points
