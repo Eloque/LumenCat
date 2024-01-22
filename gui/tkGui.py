@@ -227,6 +227,7 @@ class App(customtkinter.CTk):
 
     def draw_laser_project(self):
 
+        # We will iterate through all the shapes we have
         # Get all shapes as process points
         shapes = self.laser_project.get_all_shapes_as_process_points()
 
@@ -234,7 +235,7 @@ class App(customtkinter.CTk):
         # We need to convert it to process points
         # Consider that the bed size is set in self.bed_size
         for shape in shapes:
-            for point_list in shape["points_lists"]:
+            for point_list in shape:
                 for points in point_list:
                     # Flip it around the Y axis
                     points[1] = self.bed_size - points[1]
@@ -243,12 +244,12 @@ class App(customtkinter.CTk):
         # Go through all the points
         for shape in shapes:
             # And draw them on the canvas
-            for point_list in shape["points_lists"]:
-
+            for point_list in shape:
+                print(point_list)
                 current_point = point_list[-1]
 
                 for point in point_list:
-
+                    print(point)
                     line = self.canvas.create_line(current_point[0], current_point[1],
                                                    point[0], point[1], fill="black", width=3)
 

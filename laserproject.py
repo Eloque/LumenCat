@@ -224,8 +224,10 @@ class LaserProject:
 
         # Add a simple rectangle
         laser_object = LaserObject(600, 250)
-        laser_object.add_rectangle(25, 25, 50, 25)
-        # self.laser_objects.append(laser_object)
+        laser_object.add_rectangle(25, 25, 25, 25)
+        laser_object.add_rectangle(50, 50, 30, 25)
+        laser_object.location = (0,0)
+        self.laser_objects.append(laser_object)
 
         # Add a test text object
         text = "e"
@@ -249,11 +251,12 @@ class LaserObject:
 
         self.shape_gcode = None
 
-        # This is a list of points, that are in cartesian coordinates
+        # These are a list of points, that are in cartesian coordinates
         # All other data is derived from this
-        self.cartesian_points = []
+        # An object can have multiple points lists
+        self.shapes = list()
 
-        # This is the origin of the shape, all other cartesian points are relative to this
+        # This is the origin of the laser object, all other cartesian points are relative to this
         self.location = (0, 0)
 
     def get_cartesian_points_as_lists(self):
@@ -281,23 +284,44 @@ class LaserObject:
         # Create empty list
         process_points = list()
 
-        # Go through the cartesian points
-        for point in self.cartesian_points:
-            # Get the x and y coordinates
-            x = point[0] + self.location[0]
-            y = point[1] + self.location[1]
+        # Go through the shapes
+        for shape in self.shapes:
 
-            result = list()
-            result.append(x)
-            result.append(y)
+            shape_points = []
 
-            # Add the coordinates to the list
-            process_points.append(result)
+            for point in shape:
 
-        points_list = list()
-        points_list.append(process_points)
+                # Add the points to the list
+                x = point[0] + self.location[0]
+                y = point[1] + self.location[1]
 
-        return { "speed": self.speed, "power": self.power, "points_lists": points_list}
+                result = []
+                result.append(x)
+                result.append(y)
+
+                shape_points.append(result)
+
+            process_points.append(shape_points)
+
+        return process_points
+
+        # # Go through the cartesian points
+        # for point in self.cartesian_points:
+        #     # Get the x and y coordinates
+        #     x = point[0] + self.location[0]
+        #     y = point[1] + self.location[1]
+        #
+        #     result = list()
+        #     result.append(x)
+        #     result.append(y)
+        #
+        #     # Add the coordinates to the list
+        #     process_points.append(result)
+        #
+        # points_list = list()
+        # points_list.append(process_points)
+
+        #return { "speed": self.speed, "power": self.power, "points_lists": points_list}
 
     def convert_process_to_cartesian(self, process_points):
 
@@ -355,7 +379,7 @@ class LaserObject:
         points_list = list()
         points_list.extend(self.points)
 
-        return { "speed": self.speed, "power": self.power, "points": points_list}
+        return points_list
 
     def convert_to_gcode(self):
 
@@ -369,23 +393,28 @@ class LaserObject:
     # The rectangle is defined by the bottom left corner, and the width and height
     def add_rectangle(self, x, y, width, height):
 
-        self.location = (x, y)
+        # Create a list of points
+        points = list()
 
         # Bottom left corner
-        self.cartesian_points.append((0, 0))
+        points.append((x, y))
 
         # Top left corner
-        self.cartesian_points.append((0, height))
+        points.append((x, y + height))
 
         # Top right corner
-        self.cartesian_points.append((width, height))
+        points.append((x + width, y + height))
 
         # Bottom right corner
-        self.cartesian_points.append((width, 0))
+        points.append((x + width, y))
 
         # And close the shape
-        self.cartesian_points.append((0, 0))
+        points.append((x, y))
 
+        # Add this rectangle to the list of shapes
+        self.shapes.append(points)
+
+        return
 
 # A derived class for Text objects, based on LaserObject
 class LaserTextObject(LaserObject):
@@ -451,23 +480,34 @@ class LaserTextObject(LaserObject):
         # Convert the text to a list of SVG paths
         letter_paths = text_to_svg_path(self.text, self.font, self.font_size)
 
+        # Make empty process points list
+        process_points = list()
+
         for letter_path in letter_paths:
 
             # Create a LaserObject
             letter_object = LaserObject(self.speed, self.power, letter_path)
 
-            # Convert the points to paths
+            # Convert the paths to points
             letter_process_points = letter_object.get_shape_as_points()
 
+            # Add those points to the shapes list
+            letter_object.shapes.extend(letter_process_points)
+
+            # And then get the process points for those
+            shape_points = letter_object.get_process_points()
+
+            # And extend the process points list
+            process_points.extend(shape_points)
+
             # And then convert those process points to cartesian points
-            letter_object.convert_process_to_cartesian(letter_process_points["points"])
-
+#            letter_object.convert_process_to_cartesian(letter_process_points["points"])
             # And then get the process points
-            letter_shape_as_points = letter_object.get_process_points()
+#            letter_shape_as_points = letter_object.get_process_points()
+#           points_list.extend(letter_shape_as_points["points_lists"])
+#            process_points.append(shape_points)
 
-            points_list.extend(letter_shape_as_points["points_lists"])
-
-        return { "speed": self.speed, "power": self.power, "points_lists": points_list}
+        return process_points
 
     def get_svg_element(self):
 
