@@ -4,6 +4,7 @@ from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.misc.transform import Transform
+import re
 
 POINTS_PER_MM = 0.352778
 
@@ -60,8 +61,38 @@ def text_to_svg_path(text, font_path, font_size, start_x=0, start_y=0):
         # Get the path
         path = pen.getCommands()
 
+        # Check if there are any M commands in the path with a regex
+        pattern = r'([MLCQAZHVmlcqazhv][^MLCQAZHVmlcqazhv]*)'
+        components = re.findall(pattern, path)
+
+        return_path = ""
+
+        for item in components:
+            if item[0] == "M":
+                coordinates = re.split(r'[ ,]+', item[1:])
+
+                # This is hack to fix an issue with the move command and the first line command being combined
+                if len(coordinates) > 2:
+                    move_command = f"M{coordinates[0]},{coordinates[1]} "
+                    return_path += move_command
+
+                    # Pop off the coordinates two at at a time
+                    while len(coordinates) >= 2:
+                        x = coordinates.pop(0)
+                        y = coordinates.pop(0)
+                        line_command = f"L{x},{y}"
+
+                        return_path += line_command
+
+                else:
+                    return_path += item + " "
+
+            else:
+                return_path += item + " "
+
+
         # Add the path to the list, as an SVG element
-        svg_paths.append(f"<path d='{path}' />")
+        svg_paths.append(f"<path d='{return_path}' />")
 
         # Update the current x position based on the glyph's advance width
         current_x += glyph.width

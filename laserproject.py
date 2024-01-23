@@ -229,14 +229,33 @@ class LaserProject:
         laser_object = LaserObject(600, 250)
         laser_object.add_rectangle(25, 25, 25, 25)
         laser_object.add_rectangle(50, 50, 30, 25)
-        laser_object.location = (0,0)
-        self.laser_objects.append(laser_object)
+
+        # Create a triangle shape in points
+        points = list()
+        points.append((10, 10))
+        points.append((10, 15))
+        points.append((15, 15))
+
+        laser_object.add_polygon(points)
+
+        # Add a polygon object
+
+        laser_object.location = (0, 0)
+
+        # self.laser_objects.append(laser_object)
 
         # Add a test text object
-        text = "db"
-        # text = "j"
-        laser_text_object = LaserTextObject(text, "../fonts/Roboto-Regular.ttf", 30, 600, 250)
-        laser_text_object.location = (25, 25)
+        text = "abcdefghijklmnopqrstuvwxyz"
+        laser_text_object = LaserTextObject(text, "../fonts/Courier Prime.ttf", 60, 600, 250)
+        laser_text_object.location = (0, 25)
+
+        self.laser_objects.append(laser_text_object)
+
+        # Add a test text object
+        text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        laser_text_object = LaserTextObject(text, "../fonts/Courier Prime.ttf", 60, 600, 250)
+        laser_text_object.location = (25, 250)
+
         self.laser_objects.append(laser_text_object)
 
         pass
@@ -264,6 +283,7 @@ class LaserObject:
 
     def get_cartesian_points_as_lists(self):
 
+        raise NotImplementedError
         # This will return a copy of the list, so multiple point lists can be in the same shape
         # And it can be mutated without affecting the original
         point_lists = list()
@@ -301,7 +321,7 @@ class LaserObject:
 
                 # Add the points to the list
                 x = point[0] + self.location[0]
-                y = point[1] + self.location[1]
+                y = point[1]
 
                 result = []
                 result.append(x)
@@ -332,22 +352,22 @@ class LaserObject:
         #return { "speed": self.speed, "power": self.power, "points_lists": points_list}
 
     def convert_process_to_cartesian(self, process_points):
-
-        # These points are now upside down, flip them
-        # Now we have the maximum y and we can invert the points
-        max_y = 0
-        for list_of_points in process_points:
-            for point in list_of_points:
-                if point[1] > max_y:
-                    max_y = point[1]
-
-        # Now we have the maximum y and we can invert the points
-        for list_of_points in process_points:
-            for point in list_of_points:
-                point[1] = max_y - point[1]
-
-        # They are now cartesian points, we need to convert them to process points
-        self.cartesian_points = process_points
+        raise NotImplementedError
+        # # These points are now upside down, flip them
+        # # Now we have the maximum y and we can invert the points
+        # max_y = 0
+        # for list_of_points in process_points:
+        #     for point in list_of_points:
+        #         if point[1] > max_y:
+        #             max_y = point[1]
+        #
+        # # Now we have the maximum y and we can invert the points
+        # for list_of_points in process_points:
+        #     for point in list_of_points:
+        #         point[1] = max_y - point[1]
+        #
+        # # They are now cartesian points, we need to convert them to process points
+        # self.cartesian_points = process_points
 
 
     def get_path(self):
@@ -424,6 +444,14 @@ class LaserObject:
 
         return
 
+    def add_polygon(self, points):
+
+
+        # Add this polygon to the list of shapes
+        self.shapes.append(points)
+
+        return
+
 # A derived class for Text objects, based on LaserObject
 class LaserTextObject(LaserObject):
 
@@ -495,10 +523,12 @@ class LaserTextObject(LaserObject):
         # Make empty process points list
         process_points = list()
 
+
         for letter_path in letter_paths:
 
             # Create a LaserObject
             letter_object = LaserObject(self.speed, self.power, letter_path)
+            letter_object.location = self.location
 
             # Convert the paths to points
             letter_process_points = letter_object.get_shape_as_points()
@@ -514,6 +544,7 @@ class LaserTextObject(LaserObject):
 
         # Now we have the process points, we need to convert them to cartesian points
         max_y = 0
+
         for list_of_points in process_points:
             for point in list_of_points:
                 if point[1] > max_y:
@@ -610,6 +641,7 @@ def convert_path_to_points(path):
 
         if item[0] == "Q":
 
+            # This is a quadratic bezier curve c
             coordinates = re.split(r'[ ,]+', item[1:])
             control_coordinates = coordinates[0:2]
             end_coordinates = coordinates[2:4]

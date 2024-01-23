@@ -245,12 +245,11 @@ class App(customtkinter.CTk):
         for shape in shapes:
             # And draw them on the canvas
             for point_list in shape:
-                print(point_list)
-                current_point = point_list[-1]
+                current_point = point_list[0]
 
                 for point in point_list:
-                    print(point)
-                    line = self.canvas.create_line(current_point[0], current_point[1],
+
+                    line = self.canvas.create_line(current_point[0]  , current_point[1] ,
                                                    point[0], point[1], fill="black", width=3)
 
                     self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)

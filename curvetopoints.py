@@ -2,7 +2,7 @@ import numpy as np
 
 # This comes straight from the Wikipedia article on Bezier curves
 # And I have no deep insight in how this works
-def quadratic_bezier(start, control, end, num_points=4):
+def quadratic_bezier(start, control, end, num_points=3):
     """
     Generate points along a quadratic Bezier curve.
 
