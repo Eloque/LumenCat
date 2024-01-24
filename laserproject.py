@@ -242,19 +242,19 @@ class LaserProject:
 
         laser_object.location = (0, 0)
 
-        # self.laser_objects.append(laser_object)
+        self.laser_objects.append(laser_object)
 
         # Add a test text object
         text = "abcdefghijklmnopqrstuvwxyz"
-        laser_text_object = LaserTextObject(text, "../fonts/Courier Prime.ttf", 60, 600, 250)
-        laser_text_object.location = (0, 25)
+        laser_text_object = LaserTextObject(text, "../fonts/Ubuntu-R.ttf", 16, 600, 250)
+        laser_text_object.location = (0, 50)
 
         self.laser_objects.append(laser_text_object)
 
         # Add a test text object
         text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        laser_text_object = LaserTextObject(text, "../fonts/Courier Prime.ttf", 60, 600, 250)
-        laser_text_object.location = (25, 250)
+        laser_text_object = LaserTextObject(text, "../fonts/Ubuntu-R.ttf", 20, 600, 250)
+        laser_text_object.location = (25, 25)
 
         self.laser_objects.append(laser_text_object)
 
@@ -321,13 +321,19 @@ class LaserObject:
 
                 # Add the points to the list
                 x = point[0] + self.location[0]
-                y = point[1]
+                y = point[1] + self.location[1]
 
                 result = []
                 result.append(x)
                 result.append(y)
 
                 shape_points.append(result)
+
+            # Hack, hacky code, hacky code
+            # This will flip it !
+            for points in shape_points:
+                # Flip it around the Y axis
+                points[1] = 400 - points[1]
 
             process_points.append(shape_points)
 
@@ -523,7 +529,10 @@ class LaserTextObject(LaserObject):
         # Make empty process points list
         process_points = list()
 
+        letter_objects = list()
+        letter_process_points_list = list()
 
+        # Get all the lettesr
         for letter_path in letter_paths:
 
             # Create a LaserObject
@@ -533,6 +542,26 @@ class LaserTextObject(LaserObject):
             # Convert the paths to points
             letter_process_points = letter_object.get_shape_as_points()
 
+            letter_process_points_list.append(letter_process_points)
+            letter_objects.append(letter_object)
+
+        # Get the max_y over all the letters
+        max_y = 0
+        for shape in letter_process_points_list:
+            for list_of_points in shape:
+                for point in list_of_points:
+                    if point[1] > max_y:
+                        max_y = point[1]
+
+        # Convert all the letters to cartesian points
+        for letter_object in letter_objects:
+
+            # Get the process points for the letter
+            letter_process_points = letter_object.get_shape_as_points()
+
+            # These are process points, we need to convert them to cartesian points
+            letter_process_points = convert_process_to_cartesian(letter_process_points, max_y = max_y)
+
             # Add those points to the shapes list
             letter_object.shapes.extend(letter_process_points)
 
@@ -541,19 +570,6 @@ class LaserTextObject(LaserObject):
 
             # And extend the process points list
             process_points.extend(shape_points)
-
-        # Now we have the process points, we need to convert them to cartesian points
-        max_y = 0
-
-        for list_of_points in process_points:
-            for point in list_of_points:
-                if point[1] > max_y:
-                    max_y = point[1]
-
-        # Now we have the maximum y and we can invert the points
-        for list_of_points in process_points:
-            for point in list_of_points:
-                point[1] = max_y - point[1]
 
         return process_points
 
@@ -698,15 +714,16 @@ def convert_points_to_gcode(points):
     return gcode
 
 # Helper function to covert a set of process points to cartesian points
-def convert_process_to_cartesian(points):
+def convert_process_to_cartesian(points, max_y = 0):
 
     # These points are now upside down, flip them
     # Now we have the maximum y and we can invert the points
-    max_y = 0
-    for list_of_points in points:
-        for point in list_of_points:
-            if point[1] > max_y:
-                max_y = point[1]
+    # Check if we have the max_y, or we need to find it
+    if max_y == 0:
+        for list_of_points in points:
+            for point in list_of_points:
+                if point[1] > max_y:
+                    max_y = point[1]
 
     # Now we have the maximum y and we can invert the points
     for list_of_points in points:

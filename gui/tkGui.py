@@ -231,15 +231,6 @@ class App(customtkinter.CTk):
         # Get all shapes as process points
         shapes = self.laser_project.get_all_shapes_as_process_points()
 
-        # At this point it is still cartesian coordinates
-        # We need to convert it to process points
-        # Consider that the bed size is set in self.bed_size
-        for shape in shapes:
-            for point_list in shape:
-                for points in point_list:
-                    # Flip it around the Y axis
-                    points[1] = self.bed_size - points[1]
-
         # And then draw it
         # Go through all the points
         for shape in shapes:
@@ -256,39 +247,6 @@ class App(customtkinter.CTk):
                     current_point = point
 
         return
-
-        # Get all the shapes
-        shapes = self.laser_project.get_all_shapes_as_points()
-        max_y = self.laser_project.get_max_y()
-
-        # We now have the max Y, that becomes equal to the bed size
-        # All other points are move to this
-        displacement = self.bed_size - max_y
-
-        # compensate for the dread full fact that the canvas has a different Y axis
-        for shape in shapes:
-            for points in shape["points"]:
-                for point_list in points:
-                    for point in point_list:
-
-                        # Flip it around the Y axis
-                        point[1] = point[1] + displacement
-
-        # Go through all the points
-        for shape in shapes:
-            # And draw them on the canvas
-            for point_list in shape["points"]:
-
-                for sections in point_list:
-                    current_point = sections[0]
-
-                    for point in sections[1:]:
-
-                        line = self.canvas.create_line(current_point[0], current_point[1],
-                                                       point[0], point[1], fill="black")
-
-                        self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
-                        current_point = point
 
     def rescale(self):
 
