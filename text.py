@@ -18,12 +18,29 @@ def text_to_svg_path(text, font_path, font_size, start_x=0, start_y=0):
     points_per_mm = POINTS_PER_MM
     font_size_pt = font_size * points_per_mm
 
-    current_x = 0  # Horizontal cursor position
+    current_x = 0 # Horizontal cursor position
+    current_y = 0 #
 
     for char in text:
-        # Get the glyph object
-        glyph = font.getGlyphSet().get(char)
-        if glyph is None:  # Skip characters not found in the font
+
+        if char == "\n":
+            # Move the cursor back to the start of the line
+            current_x = 0
+            current_y -= units_per_em
+            continue
+
+        # Convert character to Unicode code point
+        code_point = ord(char)
+
+        # Get the best character map from the font
+        cmap = font.getBestCmap()
+
+        # Get the glyph name using the code point
+        glyph_name = cmap.get(code_point)
+
+        # Get the glyph object, by name I guess
+        glyph = font.getGlyphSet().get(glyph_name)
+        if glyph is None or char == " ":  # Skip characters not found in the font
 
             if char == " ":
                 # Get the advance width of the space character
@@ -39,6 +56,8 @@ def text_to_svg_path(text, font_path, font_size, start_x=0, start_y=0):
 
             continue
 
+
+
         # Create a pen for drawing the glyph path
         pen = SVGPathPen(font.getGlyphSet())
 
@@ -51,8 +70,8 @@ def text_to_svg_path(text, font_path, font_size, start_x=0, start_y=0):
         scale = Transform().scale(font_size_pt / units_per_em, -font_size_pt / units_per_em)
         scaled_pen = TransformPen(location_pen, scale)
 
-        # Apply translation along the x-axis and move down by the font's height
-        translate = Transform().translate(current_x, -units_per_em)
+        # Apply translation along the x-axis
+        translate = Transform().translate(current_x, -units_per_em + current_y)
         transformed_pen = TransformPen(scaled_pen, translate)
 
         # Draw the character with the scaled pen

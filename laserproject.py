@@ -228,33 +228,14 @@ class LaserProject:
         # Add a simple rectangle
         laser_object = LaserObject(600, 250)
         laser_object.add_rectangle(25, 25, 25, 25)
-        laser_object.add_rectangle(50, 50, 30, 25)
-
-        # Create a triangle shape in points
-        points = list()
-        points.append((10, 10))
-        points.append((10, 15))
-        points.append((15, 15))
-
-        laser_object.add_polygon(points)
-
-        # Add a polygon object
-
-        laser_object.location = (0, 0)
-
         self.laser_objects.append(laser_object)
 
-        # Add a test text object
-        text = "abcdefghijklmnopqrstuvwxyz"
-        laser_text_object = LaserTextObject(text, "../fonts/Ubuntu-R.ttf", 16, 600, 250)
-        laser_text_object.location = (0, 50)
-
-        self.laser_objects.append(laser_text_object)
-
-        # Add a test text object
-        text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        laser_text_object = LaserTextObject(text, "../fonts/Ubuntu-R.ttf", 20, 600, 250)
-        laser_text_object.location = (25, 25)
+        # Add a some text
+        text = ("Speed  600\n"
+                "Power  250\n"
+                "Passes 1")
+        laser_text_object = LaserTextObject(text, "../fonts/UbuntuMono-Regular.ttf", 16, 600, 250)
+        laser_text_object.location = (52, 30)
 
         self.laser_objects.append(laser_text_object)
 
