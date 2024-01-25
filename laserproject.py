@@ -91,10 +91,10 @@ class LaserProject:
         # Return the list
         return self.shapes_as_points
 
+    # This is the original of the function
     def get_all_shapes_as_cartesian_points(self):
 
         shapes_as_cartesian_points = []
-        point_lists = list()
 
         # Go through the laser objects
         for laser_object in self.laser_objects:
@@ -103,7 +103,6 @@ class LaserProject:
             power = laser_object.power
 
             point_lists = laser_object.get_cartesian_points_as_lists()
-
             shapes_as_cartesian_points.append({"speed": speed, "power": power, "point_lists": point_lists})
 
         return shapes_as_cartesian_points
@@ -225,21 +224,46 @@ class LaserProject:
         # Clear out the laser objects
         self.laser_objects = []
 
-        # Add a simple rectangle
-        laser_object = LaserObject(600, 250)
-        laser_object.add_rectangle(25, 25, 25, 25)
-        self.laser_objects.append(laser_object)
+        laser_objects = self.material_test(600, 250)
 
-        # Add a some text
-        text = ("Speed  600\n"
-                "Power  250\n"
-                "Passes 1")
-        laser_text_object = LaserTextObject(text, "../fonts/UbuntuMono-Regular.ttf", 16, 600, 250)
-        laser_text_object.location = (52, 30)
+        laser_objects[0].translate(0,0)
+        laser_objects[1].translate(0, 0)
+        self.laser_objects.append(laser_objects[0])
+        self.laser_objects.append(laser_objects[1])
 
-        self.laser_objects.append(laser_text_object)
+        laser_objects = self.material_test(600, 350)
+
+        laser_objects[0].translate(0,25)
+        laser_objects[1].translate(0, 25)
+        self.laser_objects.append(laser_objects[0])
+        self.laser_objects.append(laser_objects[1])
+
+        laser_objects = self.material_test(600, 600)
+
+        laser_objects[0].translate(0,50)
+        laser_objects[1].translate(0, 50)
+        self.laser_objects.append(laser_objects[0])
+        self.laser_objects.append(laser_objects[1])
 
         pass
+
+    # Create a small square, and some text
+    def material_test(self, speed, power):
+
+        # Add a simple rectangle
+        laser_object = LaserObject(speed, power)
+        laser_object.add_rectangle(2, 2, 21, 21)
+
+        # Add a some text
+        text = (f"Speed  {speed}\n"
+                f"Power  {power}\n"
+                "Passes 1")
+
+        # Writing has default speed/power 600-250
+        laser_text_object = LaserTextObject(text, "../fonts/UbuntuMono-Regular.ttf", 14, 600, 250)
+        laser_text_object.location = (25, 6)
+
+        return laser_object, laser_text_object
 
 # A LaserObject is an SVG object, that can be converted to GCode
 # It is a path object, or needs conversion to a path object first
@@ -262,23 +286,30 @@ class LaserObject:
         # This is the origin of the laser object, all other cartesian points are relative to this
         self.location = (0, 0)
 
+    def translate(self, x, y ):
+
+        x = self.location[0] + x
+        y = self.location[1] + y
+
+        self.location = (x, y)
+
     def get_cartesian_points_as_lists(self):
 
-        raise NotImplementedError
         # This will return a copy of the list, so multiple point lists can be in the same shape
         # And it can be mutated without affecting the original
         point_lists = list()
 
-        cartesian_points = []
+        for shape in self.shapes:
 
-        # and add the offset to all the points
-        for point in self.cartesian_points:
-            x = point[0] + self.location[0]
-            y = point[1] + self.location[1]
+            cartesian_points = list()
 
-            cartesian_points.append((x, y))
+            for point in shape:
+                x = point[0] + self.location[0]
+                y = point[1] + self.location[1]
 
-        point_lists.append(cartesian_points)
+                cartesian_points.append((x, y))
+
+            point_lists.append(cartesian_points)
 
         return point_lists
 
@@ -471,33 +502,67 @@ class LaserTextObject(LaserObject):
 
             return letter_points
 
+
+    # This is the laser TextObject of the function
     def get_cartesian_points_as_lists(self):
 
-        # probably not need
-        raise NotImplementedError
-
-        # This will return a copy of the list, so multiple point lists can be in the same shape
-        # And it can be mutated without affecting the original
-        points_list = list()
-
+        # Convert the text to a list of SVG paths
         letter_paths = text_to_svg_path(self.text, self.font, self.font_size)
+
+        # Make empty process points list
+        process_points = list()
+
+        letter_objects = list()
+        letter_process_points_list = list()
+
+        # Get all the lettesr
         for letter_path in letter_paths:
 
             # Create a LaserObject
             letter_object = LaserObject(self.speed, self.power, letter_path)
             letter_object.location = self.location
 
-            # Convert the points to paths
+            # Convert the paths to points
             letter_process_points = letter_object.get_shape_as_points()
 
-            # And then convert those process points to cartesian points
-            letter_object.convert_process_to_cartesian(letter_process_points["points"][0])
+            letter_process_points_list.append(letter_process_points)
+            letter_objects.append(letter_object)
 
-            # And the add those cartesian points to the list
-            cartesian = letter_object.get_cartesian_points_as_lists()
-            points_list.extend(cartesian)
+        # Get the max_y over all the letters
+        max_y = 0
+        for shape in letter_process_points_list:
+            for list_of_points in shape:
+                for point in list_of_points:
+                    if point[1] > max_y:
+                        max_y = point[1]
 
-        return points_list
+        # A this point, we have cartesian points for each letter, as LaserObjects
+
+        # Convert all the letters to cartesian points
+        for letter_object in letter_objects:
+
+            # Get the process points for the letter
+            letter_process_points = letter_object.get_shape_as_points()
+
+            # These are process points, we need to convert them to cartesian points
+            letter_process_points = convert_process_to_cartesian(letter_process_points, max_y = max_y)
+
+            # Add those points to the shapes list
+            letter_object.shapes.extend(letter_process_points)
+
+            # And for all those points, fix location
+            for shape in letter_process_points:
+                point_list = list()
+
+                for point in shape:
+                    x = point[0] + self.location[0]
+                    y = point[1] + self.location[1]
+
+                    point_list.append((x, y))
+
+                process_points.append(point_list)
+
+        return process_points
 
     # This overloaded function takes into account that the text is converted to SVG glyphs first
     # Then those pats, are converted to process points
@@ -540,6 +605,7 @@ class LaserTextObject(LaserObject):
             # Get the process points for the letter
             letter_process_points = letter_object.get_shape_as_points()
 
+            # Really confused here!
             # These are process points, we need to convert them to cartesian points
             letter_process_points = convert_process_to_cartesian(letter_process_points, max_y = max_y)
 
