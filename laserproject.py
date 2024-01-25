@@ -101,9 +101,13 @@ class LaserProject:
 
             speed = laser_object.speed
             power = laser_object.power
+            passes = laser_object.passes
 
             point_lists = laser_object.get_cartesian_points_as_lists()
-            shapes_as_cartesian_points.append({"speed": speed, "power": power, "point_lists": point_lists})
+            shapes_as_cartesian_points.append({"speed": speed,
+                                               "power": power,
+                                               "passes": passes,
+                                               "point_lists": point_lists})
 
         return shapes_as_cartesian_points
 
@@ -153,27 +157,32 @@ class LaserProject:
 
                 speed = f"F{shape["speed"]}"
                 power = f"S{shape["power"]}"
+                passes = shape["passes"]
 
                 shape_gcode = convert_points_to_gcode(point_list)
                 start_gcode = shape_gcode.pop(0)
 
                 gcode.append("; Shape start")
-                gcode.append("; Turn laser off, go to start position")
-                gcode.append("M5")
-                gcode.append(start_gcode)
 
-                # Turn the laser on
-                gcode.append("; Turn laser on")
-                gcode.append("; constant power mode, but turned off")
-                gcode.append(self.laser_mode)
+                # We should iterate the passes here
+                for i in range(passes):
+                    gcode.append(f"; Pass {i+1} of {passes}")
+                    gcode.append("; Turn laser off, go to start position")
+                    gcode.append("M5")
+                    gcode.append(start_gcode)
 
-                # Set the speed and power
-                gcode.append("; Set speed and power")
-                gcode.append(speed)
-                gcode.append(power)
+                    # Turn the laser on
+                    gcode.append("; Turn laser on")
+                    gcode.append("; constant power mode, but turned off")
+                    gcode.append(self.laser_mode)
 
-                # Add the gcode to the list
-                gcode.extend(shape_gcode)
+                    # Set the speed and power
+                    gcode.append("; Set speed and power")
+                    gcode.append(speed)
+                    gcode.append(power)
+
+                    # Add the gcode to the list
+                    gcode.extend(shape_gcode)
 
         # Add the footer
         gcode.append("; All done, turn laser off")
@@ -224,26 +233,40 @@ class LaserProject:
         # Clear out the laser objects
         self.laser_objects = []
 
-        laser_objects = self.material_test(600, 250)
+        # Lets create a settings list, items of speed, power, passes
+        settings = [(600, 700, 10), (200, 800, 4), (600, 500, 8), (1200, 250, 20)]
+        n = 0
+        for setting in settings:
+            laser_objects = self.small_material_test(setting[0], setting[1], setting[2])
 
-        laser_objects[0].translate(0,0)
-        laser_objects[1].translate(0, 0)
-        self.laser_objects.append(laser_objects[0])
-        self.laser_objects.append(laser_objects[1])
+            laser_objects[0].translate(0, n * 12)
+            laser_objects[1].translate(0, n * 12)
 
-        laser_objects = self.material_test(600, 350)
+            self.laser_objects.append(laser_objects[0])
+            self.laser_objects.append(laser_objects[1])
 
-        laser_objects[0].translate(0,25)
-        laser_objects[1].translate(0, 25)
-        self.laser_objects.append(laser_objects[0])
-        self.laser_objects.append(laser_objects[1])
+            n+=1
 
-        laser_objects = self.material_test(600, 600)
-
-        laser_objects[0].translate(0,50)
-        laser_objects[1].translate(0, 50)
-        self.laser_objects.append(laser_objects[0])
-        self.laser_objects.append(laser_objects[1])
+        # laser_objects = self.small_material_test(600, 250, 1)
+        #
+        # laser_objects[0].translate(0,0)
+        # laser_objects[1].translate(0, 0)
+        # self.laser_objects.append(laser_objects[0])
+        # self.laser_objects.append(laser_objects[1])
+        #
+        # laser_objects = self.small_material_test(600, 350, 1)
+        #
+        # laser_objects[0].translate(0,12)
+        # laser_objects[1].translate(0, 12)
+        # self.laser_objects.append(laser_objects[0])
+        # self.laser_objects.append(laser_objects[1])
+        #
+        # laser_objects = self.small_material_test(600, 600, 1)
+        #
+        # laser_objects[0].translate(0,24)
+        # laser_objects[1].translate(0, 24)
+        # self.laser_objects.append(laser_objects[0])
+        # self.laser_objects.append(laser_objects[1])
 
         pass
 
@@ -265,14 +288,30 @@ class LaserProject:
 
         return laser_object, laser_text_object
 
+    def small_material_test(self, speed, power, passes):
+
+        # Add a simple rectangle
+        laser_object = LaserObject(speed, power, passes)
+        laser_object.add_rectangle(0, 0, 7, 7)
+
+        # Add a some text
+        text = (f"{speed}\n{power}.{passes}")
+
+        # Writing has default speed/power 600-250
+        laser_text_object = LaserTextObject(text, "../fonts/UbuntuMono-Regular.ttf", 9, 600, 250, 1)
+        laser_text_object.location = (8, 1)
+
+        return laser_object, laser_text_object
+
 # A LaserObject is an SVG object, that can be converted to GCode
 # It is a path object, or needs conversion to a path object first
 class LaserObject:
 
-    def __init__(self, speed, power, svg_element = None):
+    def __init__(self, speed, power, passes, svg_element = None):
         self.svg_element = svg_element
         self.speed = speed
         self.power = power
+        self.passes = passes
         self.path = None
         self.points = None
 
@@ -474,13 +513,13 @@ class LaserObject:
 class LaserTextObject(LaserObject):
 
     # This class has a font size, text and font
-    def __init__(self, text, font, font_size, speed, power):
+    def __init__(self, text, font, font_size, speed, power, passes):
         self.text = text
         self.font = font
         self.font_size = font_size
 
         # Call the parent constructor
-        super().__init__(speed, power)
+        super().__init__(speed, power, passes)
 
 
     # Override the get_shape_as_points method
@@ -519,7 +558,7 @@ class LaserTextObject(LaserObject):
         for letter_path in letter_paths:
 
             # Create a LaserObject
-            letter_object = LaserObject(self.speed, self.power, letter_path)
+            letter_object = LaserObject(self.speed, self.power, self.passes, letter_path)
             letter_object.location = self.location
 
             # Convert the paths to points
@@ -582,7 +621,7 @@ class LaserTextObject(LaserObject):
         for letter_path in letter_paths:
 
             # Create a LaserObject
-            letter_object = LaserObject(self.speed, self.power, letter_path)
+            letter_object = LaserObject(self.speed, self.power, self.passes, letter_path)
             letter_object.location = self.location
 
             # Convert the paths to points
