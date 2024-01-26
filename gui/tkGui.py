@@ -36,6 +36,14 @@ class App(customtkinter.CTk):
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Triangle", command=self.create_triangle)
         self.sidebar_button_1.grid(row=1, column=0, padx=20, pady=10)
 
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Circle", command=self.create_circle)
+        self.sidebar_button_1.grid(row=2, column=0, padx=20, pady=10)
+
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Crochet", command=self.create_crochet)
+        self.sidebar_button_1.grid(row=3, column=0, padx=20, pady=10)
+
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
 
@@ -262,24 +270,12 @@ class App(customtkinter.CTk):
 
     def create_triangle(self):
 
-        # We are going to create a triangle with cartasion coordinates
-        # from 25,25 to 25,50 to 50,25
-
-        points = [[25, 25], [25, 50], [50, 25], [25, 25]]
-
         # Check if we have a LaserProject, create it if needed
         if self.laser_project is None:
             self.laser_project = LaserProject()
 
-        lt = LaserTextObject("J", "../Ubuntu-R.ttf", 20, 600, 250)
-        self.laser_project.laser_objects.append(lt)
-
-        self.draw_all_elements()
-
-        return
-
         # Create a LaserObject
-        laser_object = LaserObject(600, 250)
+        laser_object = LaserObject(600, 250, 1)
         laser_object.location = (0,0)
 
         laser_object.add_polygon(points)
@@ -290,8 +286,76 @@ class App(customtkinter.CTk):
         # And draw all it
         self.draw_all_elements()
 
+    def create_circle(self):
 
+        # Check if we have a LaserProject, create it if needed
+        if self.laser_project is None:
+            self.laser_project = LaserProject()
 
+        # Heavy cut mdf?
+        speed = 200
+        power = 800
+        passes = 4
+
+        # Trial 2
+        speed = 400
+        power = 700
+        passes = 10
+
+        l = 7
+
+        # Create a LaserObject
+        laser_object = LaserObject(speed, power, passes)
+        laser_object.location = (l,l)
+        laser_object.add_circle(5,5, 5)
+
+        # Add the LaserObject to the LaserProject
+        self.laser_project.laser_objects.append(laser_object)
+
+        laser_object = LaserObject(speed, power, passes)
+        laser_object.location = (l,l)
+        laser_object.add_circle(5,5, 9)
+
+        # Add the LaserObject to the LaserProject
+        self.laser_project.laser_objects.append(laser_object)
+
+        laser_object = LaserObject(speed, power, passes)
+        laser_object.location = (l,l)
+        laser_object.add_circle(5,5, 12)
+
+        # Add the LaserObject to the LaserProject
+        self.laser_project.laser_objects.append(laser_object)
+
+        # And draw all it
+        self.draw_all_elements()
+
+    def create_crochet(self):
+
+        self.laser_project = LaserProject()
+        speed = 600
+        power = 700
+        passes = 20
+
+        # Add 6cm x 6cm square
+        laser_object = LaserObject(speed, power, passes)
+        laser_object.location = (0,0)
+
+        laser_object.add_rounded_rectangle(30,30,60,60,5)
+
+        # Add four circles, each 2mm in diameter, at the corners
+        laser_object.add_circle(5, 5, 1.5)
+        laser_object.add_circle(55, 55, 1.5)
+        laser_object.add_circle(5, 55, 1.5)
+        laser_object.add_circle(55, 5, 1.5)
+
+        self.laser_project.laser_objects.append(laser_object)
+
+        laser_object = LaserTextObject("5cm x 5cm\nBoven", "../Ubuntu-R.ttf", 20, 600, 250, 1)
+        laser_object.location = (5,15)
+
+        self.laser_project.laser_objects.append(laser_object)
+
+        self.draw_all_elements()
 
 if __name__ == "__main__":
     app = App()

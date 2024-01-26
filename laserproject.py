@@ -234,13 +234,16 @@ class LaserProject:
         self.laser_objects = []
 
         # Lets create a settings list, items of speed, power, passes
-        settings = [(600, 700, 10), (200, 800, 4), (600, 500, 8), (1200, 250, 20)]
+        settings = [(600, 700, 10),
+                    (200, 800, 4),
+                    (400, 700, 8),
+                    (1200, 400, 20)]
         n = 0
         for setting in settings:
             laser_objects = self.small_material_test(setting[0], setting[1], setting[2])
 
-            laser_objects[0].translate(0, n * 12)
-            laser_objects[1].translate(0, n * 12)
+            laser_objects[0].translate(0, n * 20)
+            laser_objects[1].translate(0, n * 20)
 
             self.laser_objects.append(laser_objects[0])
             self.laser_objects.append(laser_objects[1])
@@ -292,14 +295,17 @@ class LaserProject:
 
         # Add a simple rectangle
         laser_object = LaserObject(speed, power, passes)
-        laser_object.add_rectangle(0, 0, 7, 7)
+        # laser_object.add_rectangle(0, 0, 7, 7)
+        laser_object.add_rounded_rectangle(10, 10, 10, 10)
+
+        laser_object.add_circle(10, 10, 9)
 
         # Add a some text
-        text = (f"{speed}\n{power}.{passes}")
+        text = (f"{speed}\n{int(power/10)}.{passes}")
 
         # Writing has default speed/power 600-250
         laser_text_object = LaserTextObject(text, "../fonts/UbuntuMono-Regular.ttf", 9, 600, 250, 1)
-        laser_text_object.location = (8, 1)
+        laser_text_object.location = (6, 7.5)
 
         return laser_object, laser_text_object
 
@@ -501,10 +507,84 @@ class LaserObject:
 
         return
 
+    def add_rounded_rectangle(self, x_center, y_center, width, height, radius=3):
+
+        import numpy as np
+        """
+        Generate points on the boundary of a rounded rectangle.
+
+        Parameters:
+        x_center (float): The x-coordinate of the center of the rectangle.
+        y_center (float): The y-coordinate of the center of the rectangle.
+        width (float): The width of the rectangle.
+        height (float): The height of the rectangle.
+        radius (float): The radius of the corners.
+        points_per_corner (int): Number of points to generate on each corner.
+
+        Returns:
+        list of tuples: List of (x, y) coordinates of the points on the boundary.
+        """
+        points_per_corner = 16
+
+        # Calculate corner centers
+        half_width, half_height = width / 2, height / 2
+        corner_centers = [
+            (x_center - half_width + radius, y_center - half_height + radius),  # top-left
+            (x_center + half_width - radius, y_center - half_height + radius),  # top-right
+            (x_center + half_width - radius, y_center + half_height - radius),  # bottom-right
+            (x_center - half_width + radius, y_center + half_height - radius),  # bottom-left
+        ]
+
+        # Generate points for each corner
+        points = []
+        for (cx, cy), start_angle in zip(corner_centers, [np.pi, 1.5 * np.pi, 0, 0.5 * np.pi]):
+            angles = np.linspace(start_angle, start_angle + np.pi / 2, points_per_corner, endpoint=False)
+            x_points = cx + radius * np.cos(angles)
+            y_points = cy + radius * np.sin(angles)
+            points.extend(list(zip(x_points, y_points)))
+
+        # Take the last point, and add it to the beginning
+        points.append(points[0])
+
+        # Add this rectangle to the list of shapes
+        self.shapes.append(points)
+
+        return
+
     def add_polygon(self, points):
 
-
         # Add this polygon to the list of shapes
+        self.shapes.append(points)
+
+        return
+
+    def add_circle(self, x_center, y_center, radius):
+
+        import numpy as np
+
+        """
+        Generate points on the circumference of a circle.
+
+        Parameters:
+        x_center (float): The x-coordinate of the center of the circle.
+        y_center (float): The y-coordinate of the center of the circle.
+        radius (float): The radius of the circle.
+        num_points (int): Number of points to generate on the circumference.
+
+        Returns:
+        list of tuples: List of (x, y) coordinates of the points on the circumference.
+        """
+        num_points = 128
+        angles = np.linspace(0, 2 * np.pi, num_points, endpoint=False)
+        x_points = x_center + radius * np.cos(angles)
+        y_points = y_center + radius * np.sin(angles)
+
+        points = list(zip(x_points, y_points))
+
+        # Take the last point, and add it to the beginning
+        points.append(points[0])
+
+        # Add this circle to the list of shapes
         self.shapes.append(points)
 
         return
