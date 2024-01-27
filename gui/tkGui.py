@@ -44,6 +44,10 @@ class App(customtkinter.CTk):
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Crochet", command=self.create_crochet)
         self.sidebar_button_1.grid(row=3, column=0, padx=20, pady=10)
 
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Minecraft", command=self.create_sword)
+        self.sidebar_button_1.grid(row=4, column=0, padx=20, pady=10)
+
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
 
@@ -135,7 +139,7 @@ class App(customtkinter.CTk):
 
         # Move to the second screen for dev reasons
         # This is a dirty hack, to work around WSL2 tomfoolery
-        self.geometry(f"+2900+100")
+        self.geometry(f"+2700+100")
 
     def on_configure(self, event):
         pass
@@ -356,6 +360,132 @@ class App(customtkinter.CTk):
         self.laser_project.laser_objects.append(laser_object)
 
         self.draw_all_elements()
+
+    def create_sword(self):
+
+        self.laser_project = LaserProject()
+        laser_object = LaserObject(200, 600, 3)
+        laser_object.location = (0,0)
+
+        pommel = [
+                (0,0),
+                (0,3),
+                (2,3)
+            ]
+
+        #laser_object.add_polygon(pommel)
+
+        x = 2
+        y = 3
+
+        hilt1 = [
+                (x,y),
+                (x,y+1),
+                (x+1,y+1)
+            ]
+
+        #laser_object.add_polygon(hilt)
+
+        x+=1
+        y+=1
+
+        hilt2 = [
+                (x,y+1),
+                (x+1,y+1),
+                (x+1,y+2)
+            ]
+
+        #laser_object.add_polygon(hilt)
+
+        guard = [
+                (x,y+2),
+                (x,y+4),
+                (x-1,y+4),
+                (x-1,y+6),
+                (x+1,y+6),
+                (x+1,y+5),
+                (x+2,y+5),
+                (x+2,y+4)
+        ]
+
+        #laser_object.add_polygon(guard)
+
+        x+=3
+        y+=4
+
+        blade = [(x,y)]
+
+        for i in range(0, 7):
+
+            y += 1
+            blade.append((x,y))
+
+            x += 1
+            blade.append((x,y))
+
+        # tip
+        y += 1
+        blade.append((x, y))
+        x += 3
+        blade.append((x,y))
+        y -= 3
+        blade.append((x, y))
+        x -= 1
+        blade.append((x, y))
+
+        for i in range(0, 7):
+
+            y -= 1
+            blade.append((x,y))
+
+            x -= 1
+            blade.append((x,y))
+
+        y -= 1
+        blade.append((x, y))
+        x+=1
+        blade.append((x, y))
+        y -= 1
+        blade.append((x, y))
+        x+=1
+        blade.append((x, y))
+        y -= 2
+        blade.append((x, y))
+        x -= 2
+        blade.append((x, y))
+        y += 1
+        blade.append((x, y))
+        x -= 2
+        blade.append((x, y))
+        y += 1
+        blade.append((x, y))
+        x -= 1
+        blade.append((x, y))
+        y -= 1
+        blade.append((x, y))
+        x -= 1
+        blade.append((x, y))
+        y -= 1
+        blade.append((x, y))
+        x -= 1
+        blade.append((x, y))
+        y -= 2
+        blade.append((x, y))
+        x -= 3
+        blade.append((x, y))
+
+        sword = pommel + hilt1 + hilt2 + guard + blade
+
+        # make the sword 3 times as big
+        sword = [(x * 3, y * 3) for x, y in sword]
+
+        laser_object.add_polygon(sword)
+
+        laser_object.add_circle(3.5, 3.5, 1)
+
+        self.laser_project.laser_objects.append(laser_object)
+        self.draw_all_elements()
+
 
 if __name__ == "__main__":
     app = App()

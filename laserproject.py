@@ -16,7 +16,7 @@ class LaserProject:
         self.gcode = None
         self.gcode_header = None
 
-        self.laser_mode = "M4" # M4 is constant power mode, M3 is PWM mode
+        self.laser_mode = "M3" # M3 is constant power mode, M4 is PWM mode
 
     # Helper function, get a string representation of the SVG
     @staticmethod
