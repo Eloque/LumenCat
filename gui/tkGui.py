@@ -371,7 +371,7 @@ class App(customtkinter.CTk):
         # laser_object = LaserObject(300, 700, 12) fail
         # laser_object = LaserObject(400, 1000, 10) failed, barely
 
-        laser_object = LaserObject(200, 900, 7 )
+        laser_object = LaserObject(190, 900, 4 )
 
         laser_object.location = (0,0)
 
@@ -487,8 +487,8 @@ class App(customtkinter.CTk):
         # make the sword 3 times as big
         sword = [(x * 3, y * 3) for x, y in sword]
 
-        laser_object.add_polygon(sword)
-        laser_object.add_circle(4.5, 4.5, 1)
+        #laser_object.add_polygon(sword)
+        #laser_object.add_circle(4.5, 4.5, 1)
 
         # # Copy sword
         # sword2 = sword.copy()
@@ -505,12 +505,11 @@ class App(customtkinter.CTk):
         # laser_object.add_polygon(sword2)
 
         # create a copy of sword, move it to the right by 50
-        for i in range(1, 4):
+        for i in range(0, 3):
             sword2 = sword.copy()
             sword2 = [(x+35*i, y+0) for x, y in sword2]
 
             laser_object.add_circle(35*i + 4.5, 4.5, 1)
-
             laser_object.add_polygon(sword2)
 
         # sword3 = sword.copy()

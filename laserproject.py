@@ -60,12 +60,13 @@ class LaserProject:
         gcode.append("; gCode created by LumenCat")
         gcode.append("; setting up machine basics")
 
-        gcode.append("; XY plane")
-        gcode.append("; cutter compensation off")
-        gcode.append("; coordinate system 1")
-        gcode.append("; move 'unit'/min")
+        gcode.append("; G17 - XY plane")
+        gcode.append("; G40 - cutter compensation off")
+        gcode.append("; G21 - unit to mm")
+        gcode.append("; G54 - work coordinate system 1")
+        gcode.append("; G90 - absolute coordinates")
 
-        gcode.append("G17 G40 G54 G94")
+        gcode.append("G17 G40 G21 G54 G90")
         gcode.append("; laser turned off")
         gcode.append("M3 S0")
 
