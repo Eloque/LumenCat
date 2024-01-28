@@ -67,7 +67,7 @@ class LaserProject:
 
         gcode.append("G17 G40 G54 G94")
         gcode.append("; laser turned off")
-        gcode.append("M5")
+        gcode.append("M3 S0")
 
         self.gcode_header = gcode
 
@@ -168,7 +168,7 @@ class LaserProject:
                 for i in range(passes):
                     gcode.append(f"; Pass {i+1} of {passes}")
                     gcode.append("; Turn laser off, go to start position")
-                    gcode.append("M5")
+                    gcode.append("S0")
                     gcode.append(start_gcode)
 
                     # Turn the laser on
@@ -186,7 +186,7 @@ class LaserProject:
 
         # Add the footer
         gcode.append("; All done, turn laser off")
-        gcode.append("M5 S0")
+        gcode.append("M5")
 
         # Got back home
         gcode.append("; Go back home")

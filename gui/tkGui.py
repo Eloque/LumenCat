@@ -364,7 +364,15 @@ class App(customtkinter.CTk):
     def create_sword(self):
 
         self.laser_project = LaserProject()
-        laser_object = LaserObject(200, 600, 3)
+        # laser_object = LaserObject(400, 700, 10)  partial succes
+        # laser_object = LaserObject(180, 850, 4)   failed
+
+        # laser_object = LaserObject(600, 700, 15) partial fail
+        # laser_object = LaserObject(300, 700, 12) fail
+        # laser_object = LaserObject(400, 1000, 10) failed, barely
+
+        laser_object = LaserObject(200, 900, 7 )
+
         laser_object.location = (0,0)
 
         pommel = [
@@ -480,8 +488,34 @@ class App(customtkinter.CTk):
         sword = [(x * 3, y * 3) for x, y in sword]
 
         laser_object.add_polygon(sword)
+        laser_object.add_circle(4.5, 4.5, 1)
 
-        laser_object.add_circle(3.5, 3.5, 1)
+        # # Copy sword
+        # sword2 = sword.copy()
+        #
+        # # rotate the sword 180 degrees
+        # sword2 = [(-x, -y) for x, y in sword2]
+        #
+        # # and move the sword2 up by 50
+        # sword2 = [(x+78, y + 48 + 10) for x, y in sword2]
+        #
+        # laser_object.add_polygon(sword2)
+        # laser_object.add_circle(78-4.5, 10+48-4.5, 1)
+        #
+        # laser_object.add_polygon(sword2)
+
+        # create a copy of sword, move it to the right by 50
+        for i in range(1, 4):
+            sword2 = sword.copy()
+            sword2 = [(x+35*i, y+0) for x, y in sword2]
+
+            laser_object.add_circle(35*i + 4.5, 4.5, 1)
+
+            laser_object.add_polygon(sword2)
+
+        # sword3 = sword.copy()
+        # sword3 = [(x+35, y) for x, y in sword3]
+        # laser_object.add_polygon(sword3)
 
         self.laser_project.laser_objects.append(laser_object)
         self.draw_all_elements()
