@@ -121,12 +121,13 @@ class App(customtkinter.CTk):
         self.bed_size = 400
         self.offset = 10
         self.scale_factor = 8
+        self.bar_size = 25
 
         # self.canvas = tk.Canvas(self.main_frame, bg="white", width=self.bed_size + self.offset * 2, height=self.bed_size + self.offset * 2)
         self.canvas = tk.Canvas(self.main_frame,
                                 bg="white",
-                                width=( self.bed_size * self.scale_factor) + self.offset * 2,
-                                height=( self.bed_size * self.scale_factor) + self.offset * 2
+                                width=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size,
+                                height=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size
                                 )
         self.canvas.pack()
 
@@ -196,6 +197,9 @@ class App(customtkinter.CTk):
         # take all the items of the canvas, and move them by offset
         self.canvas.move("all", self.offset, self.offset)
 
+        # Also move them by the bar size, but we probably need to do that somewhere else
+        self.canvas.move("all", self.bar_size, 0)
+
         # Apply the current scaling
         # self.canvas.scale("all", 0, 0, self.scale_factor, self.scale_factor)
 
@@ -228,6 +232,20 @@ class App(customtkinter.CTk):
 
             # now scale the item created
             self.canvas.scale(item, 0, 0, self.scale_factor, self.scale_factor)
+
+        # put down coordinates at the side and bottom
+        for x in range(0, self.bed_size + spacing, spacing):
+            item = self.canvas.create_text(x, self.bed_size + 2, text=str(x))
+
+            # now scale the item created
+            self.canvas.scale(item, 0, 0, self.scale_factor, self.scale_factor)
+
+        for y in range(self.bed_size + spacing, -1, -spacing):
+            item = self.canvas.create_text(-2, y, text=str(self.bed_size-y))
+
+            # now scale the item created
+            self.canvas.scale(item, 0, 0, self.scale_factor, self.scale_factor)
+
 
     def draw_laser_project(self):
 
@@ -371,7 +389,7 @@ class App(customtkinter.CTk):
         # laser_object = LaserObject(300, 700, 12) fail
         # laser_object = LaserObject(400, 1000, 10) failed, barely
 
-        laser_object = LaserObject(190, 900, 4 )
+        laser_object = LaserObject(190, 900, 1 )
 
         laser_object.location = (0,0)
 
@@ -505,7 +523,7 @@ class App(customtkinter.CTk):
         # laser_object.add_polygon(sword2)
 
         # create a copy of sword, move it to the right by 50
-        for i in range(0, 3):
+        for i in range(0, 1):
             sword2 = sword.copy()
             sword2 = [(x+35*i, y+0) for x, y in sword2]
 
