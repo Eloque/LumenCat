@@ -56,8 +56,6 @@ def text_to_svg_path(text, font_path, font_size, start_x=0, start_y=0):
 
             continue
 
-
-
         # Create a pen for drawing the glyph path
         pen = SVGPathPen(font.getGlyphSet())
 

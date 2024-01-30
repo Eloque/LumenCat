@@ -397,23 +397,7 @@ class LaserObject:
 
         return process_points
 
-        # # Go through the cartesian points
-        # for point in self.cartesian_points:
-        #     # Get the x and y coordinates
-        #     x = point[0] + self.location[0]
-        #     y = point[1] + self.location[1]
-        #
-        #     result = list()
-        #     result.append(x)
-        #     result.append(y)
-        #
-        #     # Add the coordinates to the list
-        #     process_points.append(result)
-        #
-        # points_list = list()
-        # points_list.append(process_points)
 
-        #return { "speed": self.speed, "power": self.power, "points_lists": points_list}
 
     def convert_process_to_cartesian(self, process_points):
         raise NotImplementedError
