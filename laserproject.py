@@ -67,6 +67,9 @@ class LaserProject:
         gcode.append("; G90 - absolute coordinates")
 
         gcode.append("G17 G40 G21 G54 G90")
+        gcode.append("; air assist on")
+        gcode.append("M8")
+
         gcode.append("; laser turned off")
         gcode.append("M3 S0")
 
