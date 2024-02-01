@@ -131,7 +131,18 @@ class App(customtkinter.CTk):
                                 )
         self.canvas.pack()
 
-        # Create a scrollbar for the canvas
+        # Create a button bar beneath the canvas
+        self.canvas_control_bar = customtkinter.CTkFrame(self, height=30, corner_radius=0)
+        self.canvas_control_bar.grid(row=1, column=1, padx=20, pady=2, sticky="nsew")
+
+        # add plus and minus buttons
+        self.plus_button = customtkinter.CTkButton(self.canvas_control_bar, text="+", command=self.zoom_in)
+        self.plus_button.grid(row=0, column=0, padx=20, pady=2)
+        self.minus_button = customtkinter.CTkButton(self.canvas_control_bar, text="-", command=self.zoom_out)
+        self.minus_button.grid(row=0, column=1, padx=20, pady=2)
+
+
+
 
         # Wait some time, so the window can be moved
         self.after(100, self.draw_all_elements)
@@ -377,6 +388,16 @@ class App(customtkinter.CTk):
 
         self.laser_project.laser_objects.append(laser_object)
 
+        self.draw_all_elements()
+
+    def zoom_in(self):
+
+        self.scale_factor += 1
+        self.draw_all_elements()
+
+    def zoom_out(self):
+
+        self.scale_factor -= 1
         self.draw_all_elements()
 
     def create_sword(self):
