@@ -254,27 +254,6 @@ class LaserProject:
 
             n+=1
 
-        # laser_objects = self.small_material_test(600, 250, 1)
-        #
-        # laser_objects[0].translate(0,0)
-        # laser_objects[1].translate(0, 0)
-        # self.laser_objects.append(laser_objects[0])
-        # self.laser_objects.append(laser_objects[1])
-        #
-        # laser_objects = self.small_material_test(600, 350, 1)
-        #
-        # laser_objects[0].translate(0,12)
-        # laser_objects[1].translate(0, 12)
-        # self.laser_objects.append(laser_objects[0])
-        # self.laser_objects.append(laser_objects[1])
-        #
-        # laser_objects = self.small_material_test(600, 600, 1)
-        #
-        # laser_objects[0].translate(0,24)
-        # laser_objects[1].translate(0, 24)
-        # self.laser_objects.append(laser_objects[0])
-        # self.laser_objects.append(laser_objects[1])
-
         pass
 
     # Create a small square, and some text
