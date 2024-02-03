@@ -48,6 +48,10 @@ class App(customtkinter.CTk):
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Minecraft", command=self.create_sword)
         self.sidebar_button_1.grid(row=4, column=0, padx=20, pady=10)
 
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Terrain", command=self.create_terrain_base)
+        self.sidebar_button_1.grid(row=5, column=0, padx=20, pady=10)
+
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
 
@@ -112,6 +116,7 @@ class App(customtkinter.CTk):
 
         # create main canvas frame
         self.main_frame = CTkXYFrame(self, width=600, height=600, corner_radius=0)
+        # self.main_frame = CTkXYFrame(self, width=600, height=600, corner_radius=0)
         self.main_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
 
         self.appearance_mode_optionemenu.set("System")
@@ -120,8 +125,8 @@ class App(customtkinter.CTk):
         # Make it scrollable, and bedsize + 2 x offset
         self.bed_size = 400
         self.offset = 10
-        self.scale_factor = 8
-        self.bar_size = 25
+        self.scale_factor = 4
+        self.bar_size = 50
 
         # self.canvas = tk.Canvas(self.main_frame, bg="white", width=self.bed_size + self.offset * 2, height=self.bed_size + self.offset * 2)
         self.canvas = tk.Canvas(self.main_frame,
@@ -140,9 +145,6 @@ class App(customtkinter.CTk):
         self.plus_button.grid(row=0, column=0, padx=20, pady=2)
         self.minus_button = customtkinter.CTkButton(self.canvas_control_bar, text="-", command=self.zoom_out)
         self.minus_button.grid(row=0, column=1, padx=20, pady=2)
-
-
-
 
         # Wait some time, so the window can be moved
         self.after(100, self.draw_all_elements)
@@ -393,11 +395,29 @@ class App(customtkinter.CTk):
     def zoom_in(self):
 
         self.scale_factor += 1
+
+        # Set canvas width and height
+        self.canvas.config(width=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size,
+                           height=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size)
+
+        #
+        # self.canvas = tk.Canvas(self.main_frame,
+        #                         bg="white",
+        #                         width=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size,
+        #                         height=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size
+        #                         )
+
+
         self.draw_all_elements()
 
     def zoom_out(self):
 
         self.scale_factor -= 1
+
+        # Set canvas width and height
+        self.canvas.config(width=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size,
+                           height=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size)
+
         self.draw_all_elements()
 
     def create_sword(self):
@@ -558,6 +578,34 @@ class App(customtkinter.CTk):
         self.laser_project.laser_objects.append(laser_object)
         self.draw_all_elements()
 
+    def create_terrain_base(self):
+
+        self.laser_project = LaserProject()
+        speed = 1600
+        power = 500
+        passes = 3
+
+        # Add 6cm x 6cm square
+        laser_object = LaserObject(speed, power, passes)
+        laser_object.location = (0, 0)
+
+        laser_object.add_rounded_rectangle(30, 15+2.5, 50, 25, 5)
+        laser_object.add_rounded_rectangle(30 + 5 + 50, 15+2.5, 50, 25, 5)
+        laser_object.add_rounded_rectangle(30 + 10 + 100, 15+2.5, 50, 25, 5)
+
+        laser_object.add_rounded_rectangle(30, 15+25+5+5, 50, 25, 5)
+        laser_object.add_rounded_rectangle(30 + 5 + 50, 15+25+5+5, 50, 25, 5)
+        laser_object.add_rounded_rectangle(30 + 10 + 100, 15+25+5+5, 50, 25, 5)
+
+        laser_object.add_rectangle(0,0, 170, 70)
+
+        self.laser_project.laser_objects.append(laser_object)
+
+
+
+        self.laser_project.laser_objects.append(laser_object)
+
+        self.draw_all_elements()
 
 if __name__ == "__main__":
     app = App()
