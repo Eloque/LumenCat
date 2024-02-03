@@ -583,25 +583,22 @@ class App(customtkinter.CTk):
         self.laser_project = LaserProject()
         speed = 1600
         power = 500
-        passes = 3
+        passes = 2
 
         # Add 6cm x 6cm square
         laser_object = LaserObject(speed, power, passes)
         laser_object.location = (0, 0)
 
-        laser_object.add_rounded_rectangle(30, 15+2.5, 50, 25, 5)
-        laser_object.add_rounded_rectangle(30 + 5 + 50, 15+2.5, 50, 25, 5)
-        laser_object.add_rounded_rectangle(30 + 10 + 100, 15+2.5, 50, 25, 5)
-
-        laser_object.add_rounded_rectangle(30, 15+25+5+5, 50, 25, 5)
-        laser_object.add_rounded_rectangle(30 + 5 + 50, 15+25+5+5, 50, 25, 5)
-        laser_object.add_rounded_rectangle(30 + 10 + 100, 15+25+5+5, 50, 25, 5)
+        # laser_object.add_rounded_rectangle(30, 15+2.5, 50, 25, 5)
+        # laser_object.add_rounded_rectangle(30 + 5 + 50, 15+2.5, 50, 25, 5)
+        # laser_object.add_rounded_rectangle(30 + 10 + 100, 15+2.5, 50, 25, 5)
+        #
+        # laser_object.add_rounded_rectangle(30, 15+25+5+5, 50, 25, 5)
+        # laser_object.add_rounded_rectangle(30 + 5 + 50, 15+25+5+5, 50, 25, 5)
+        # laser_object.add_rounded_rectangle(30 + 10 + 100, 15+25+5+5, 50, 25, 5)
 
         laser_object.add_rectangle(0,0, 170, 70)
-
-        self.laser_project.laser_objects.append(laser_object)
-
-
+        laser_object.add_rectangle(30, 30, 170, 70)
 
         self.laser_project.laser_objects.append(laser_object)
 
