@@ -73,7 +73,7 @@ class App(customtkinter.CTk):
         self.button_load_file.grid(row=1, column=0, padx=20, pady=10)
 
         self.button_load_test = customtkinter.CTkButton(master=self.control_bar,
-                                                        command = self.button_load_test_object,
+                                                        command = self.create_test_project,
                                                         text="Load test object",
                                                         fg_color="transparent",
                                                         border_width=2,
@@ -276,7 +276,7 @@ class App(customtkinter.CTk):
                 for point in point_list:
 
                     line = self.canvas.create_line(current_point[0]  , current_point[1] ,
-                                                   point[0], point[1], fill="black", width=3)
+                                                   point[0], point[1], fill="black", width=1)
 
                     self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
                     current_point = point
@@ -581,28 +581,93 @@ class App(customtkinter.CTk):
     def create_terrain_base(self):
 
         self.laser_project = LaserProject()
-        speed = 1600
-        power = 500
-        passes = 2
+        speed = 800
+        power = 600
+        passes = 4
 
         # Add 6cm x 6cm square
         laser_object = LaserObject(speed, power, passes)
         laser_object.location = (0, 0)
 
-        # laser_object.add_rounded_rectangle(30, 15+2.5, 50, 25, 5)
-        # laser_object.add_rounded_rectangle(30 + 5 + 50, 15+2.5, 50, 25, 5)
+        laser_object.add_rounded_rectangle(30, 7.5+7.5+1.25+15+2.5, 50, 50, 5)
+        laser_object.add_rounded_rectangle(30 + 5 + 50+25+ 2.5, 15+2.5, 100, 25, 5)
         # laser_object.add_rounded_rectangle(30 + 10 + 100, 15+2.5, 50, 25, 5)
-        #
+
         # laser_object.add_rounded_rectangle(30, 15+25+5+5, 50, 25, 5)
-        # laser_object.add_rounded_rectangle(30 + 5 + 50, 15+25+5+5, 50, 25, 5)
-        # laser_object.add_rounded_rectangle(30 + 10 + 100, 15+25+5+5, 50, 25, 5)
+        laser_object.add_rounded_rectangle(30 + 5 + 50, 15+25+5+5, 50, 25, 5)
+        laser_object.add_rounded_rectangle(30 + 10 + 100, 15+25+5+5, 50, 25, 5)
 
         laser_object.add_rectangle(0,0, 170, 70)
-        laser_object.add_rectangle(30, 30, 170, 70)
+##        laser_object.add_rectangle(30, 30, 170, 70)
 
         self.laser_project.laser_objects.append(laser_object)
 
         self.draw_all_elements()
+
+
+    def create_test_project(self):
+
+        # Take a min speed, max speed, min power, max power, and number of passes
+        # And create a test project
+        # Clear out the laser objects
+
+        # First create a new laser project
+        self.laser_project = LaserProject()
+
+        # Create a settings list, items of speed, power, passes
+        min_power = 400
+        max_power = 1000
+
+        min_speed = 200
+        max_speed = 1200
+
+        min_passes = 1
+        max_passes = 2
+
+        power_step = 200
+        speed_step = 200
+
+        # And let's decide on a divider, say 4
+        # steps = 2
+        #power_step = int((max_power - min_power) / steps)
+        #speed_step = int((max_speed - min_speed) / steps)
+
+        n = 0
+
+        # for passes in range(min_passes, max_passes):
+        p = 0
+        for power in range(min_power, max_power+power_step, power_step):
+            p += 1
+            n = 0
+            for speed in range(min_speed, max_speed+speed_step, speed_step):
+                laser_objects = self.laser_project.small_material_test(speed, power, 4)
+
+                laser_objects[0].translate(20*(p-1), n * 20)
+                laser_objects[1].translate(20*(p-1), n * 20)
+
+                self.laser_project.laser_objects.append(laser_objects[0])
+                self.laser_project.laser_objects.append(laser_objects[1])
+
+                n += 1
+
+        self.draw_all_elements()
+        #
+        # # Lets create a settings list, items of speed, power, passes
+        # settings = [(600, 700, 10),
+        #             (200, 800, 4),
+        #             (400, 700, 8),
+        #             (1200, 400, 20)]
+        # n = 0
+        # for setting in settings:
+        #     laser_objects = self.small_material_test(setting[0], setting[1], setting[2])
+        #
+        #     laser_objects[0].translate(0, n * 20)
+        #     laser_objects[1].translate(0, n * 20)
+        #
+        #     self.laser_objects.append(laser_objects[0])
+        #     self.laser_objects.append(laser_objects[1])
+        #
+        #     n+=1
 
 if __name__ == "__main__":
     app = App()
