@@ -52,10 +52,14 @@ class App(customtkinter.CTk):
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Terrain", command=self.create_terrain_base)
         self.sidebar_button_1.grid(row=5, column=0, padx=20, pady=10)
 
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Bases", command=self.create_bases)
+        self.sidebar_button_1.grid(row=6, column=0, padx=20, pady=10)
+
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
 
-        self.appearance_mode_optionemenu.grid(row=6, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_optionemenu.grid(row=7, column=0, padx=20, pady=(10, 10))
         self.scaling_label = customtkinter.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
 
         self.control_bar = customtkinter.CTkFrame(self, width=140, corner_radius=0)
@@ -668,6 +672,26 @@ class App(customtkinter.CTk):
         #     self.laser_objects.append(laser_objects[1])
         #
         #     n+=1
+
+    def create_bases(self):
+
+        self.laser_project = LaserProject()
+
+        speed = 800
+        power = 600
+        passes = 4
+
+        # Add a 50mm base
+        laser_object = LaserObject(speed, power, passes)
+        laser_object.location = (0, 0)
+        laser_object.add_circle(25, 25, 25)
+        laser_object.add_circle(100, 25+12.5, 25+12.5)
+
+        self.laser_project.laser_objects.append(laser_object)
+
+        self.draw_all_elements()
+        # Create a settings list, items of speed, power, passes
+
 
 if __name__ == "__main__":
     app = App()
