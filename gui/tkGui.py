@@ -138,6 +138,10 @@ class App(customtkinter.CTk):
                                 width=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size,
                                 height=( self.bed_size * self.scale_factor) + self.offset * 2 + self.bar_size
                                 )
+
+        # Bind the canvas to a left click event
+        # self.canvas.bind("<Button-1>", self.canvas_click_event)
+
         self.canvas.pack()
 
         # Create a button bar beneath the canvas
@@ -150,6 +154,9 @@ class App(customtkinter.CTk):
         self.minus_button = customtkinter.CTkButton(self.canvas_control_bar, text="-", command=self.zoom_out)
         self.minus_button.grid(row=0, column=1, padx=20, pady=2)
 
+        self.selection_label = customtkinter.CTkLabel(self.canvas_control_bar, text="Selection:", anchor="w")
+        self.selection_label.grid(row=0, column=2, padx=20, pady=2)
+
         # Wait some time, so the window can be moved
         self.after(100, self.draw_all_elements)
         self.after(100, self.move_canvas_to_origin)
@@ -157,7 +164,7 @@ class App(customtkinter.CTk):
 
         # Move to the second screen for dev reasons
         # This is a dirty hack, to work around WSL2 tomfoolery
-        self.geometry(f"+2700+100")
+        self.geometry(f"+2400+100")
 
     def on_configure(self, event):
         pass
@@ -277,13 +284,44 @@ class App(customtkinter.CTk):
             for point_list in shape:
                 current_point = point_list[0]
 
+                # In all these points, get the max and min x and y
+                # And then draw a line from the first to the last point
+                max_x = max([x for x, y in point_list])
+                min_x = min([x for x, y in point_list])
+                max_y = max([y for x, y in point_list])
+                min_y = min([y for x, y in point_list])
+
+
                 for point in point_list:
 
-                    line = self.canvas.create_line(current_point[0]  , current_point[1] ,
+                    line = self.canvas.create_line(current_point[0], current_point[1],
                                                    point[0], point[1], fill="black", width=1)
 
+                    # add a tag to the line
+                    self.canvas.addtag_withtag("laser_object", line)
+
                     self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
+
                     current_point = point
+
+                # draw a transparent rectangle around the object
+                line = self.canvas.create_rectangle(min_x-2, min_y-2, max_x+2, max_y+2, width=1, dash=3, outline="blue")
+
+                # At each of the corners, draw a small circle, based on min_x, min_y
+                # And then scale it
+                circle = self.canvas.create_oval(min_x-3, min_y-3, min_x-1, min_y-1, fill="blue")
+                self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
+
+                circle = self.canvas.create_oval(max_x+3, min_y-3, max_x+1, min_y-1, fill="blue")
+                self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
+
+                circle = self.canvas.create_oval(min_x-3, max_y+3, min_x-1, max_y+1, fill="blue")
+                self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
+
+                circle = self.canvas.create_oval(max_x+3, max_y+3, max_x+1, max_y+1, fill="blue")
+                self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
+
+                self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
 
         return
 
@@ -685,12 +723,23 @@ class App(customtkinter.CTk):
         laser_object = LaserObject(speed, power, passes)
         laser_object.location = (0, 0)
         laser_object.add_circle(25, 25, 25)
-        laser_object.add_circle(100, 25+12.5, 25+12.5)
+        laser_object.add_circle(75+12.5, 25+12.5, 25+12.5)
 
         self.laser_project.laser_objects.append(laser_object)
 
         self.draw_all_elements()
         # Create a settings list, items of speed, power, passes
+
+
+    # Canvas click event
+    def canvas_click_event(self, event):
+
+        print(event.widget.find_withtag("current"))
+        print(event)
+        print(f"clicked at {event.x}, {event.y}. {event.num}")
+
+
+
 
 
 if __name__ == "__main__":
