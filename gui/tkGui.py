@@ -164,7 +164,7 @@ class App(customtkinter.CTk):
 
         # Move to the second screen for dev reasons
         # This is a dirty hack, to work around WSL2 tomfoolery
-        self.geometry(f"+2400+100")
+        self.geometry(f"+2600+100")
 
     def on_configure(self, event):
         pass
@@ -722,8 +722,16 @@ class App(customtkinter.CTk):
         # Add a 50mm base
         laser_object = LaserObject(speed, power, passes)
         laser_object.location = (0, 0)
-        laser_object.add_circle(25, 25, 25)
-        laser_object.add_circle(75+12.5, 25+12.5, 25+12.5)
+
+        x = 25
+        y = 25
+
+        for i in range(0, 3):
+
+            laser_object.add_circle(x, y, 25)
+            laser_object.add_circle(x, y + 55, 25)
+
+            x += 55
 
         self.laser_project.laser_objects.append(laser_object)
 
