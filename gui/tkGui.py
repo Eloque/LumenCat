@@ -304,24 +304,24 @@ class App(customtkinter.CTk):
 
                     current_point = point
 
-                # # draw a transparent rectangle around the object
-                # line = self.canvas.create_rectangle(min_x-2, min_y-2, max_x+2, max_y+2, width=1, dash=3, outline="blue")
-                #
-                # # At each of the corners, draw a small circle, based on min_x, min_y
-                # # And then scale it
-                # circle = self.canvas.create_oval(min_x-3, min_y-3, min_x-1, min_y-1, fill="blue")
-                # self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
-                #
-                # circle = self.canvas.create_oval(max_x+3, min_y-3, max_x+1, min_y-1, fill="blue")
-                # self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
-                #
-                # circle = self.canvas.create_oval(min_x-3, max_y+3, min_x-1, max_y+1, fill="blue")
-                # self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
-                #
-                # circle = self.canvas.create_oval(max_x+3, max_y+3, max_x+1, max_y+1, fill="blue")
-                # self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
-                #
-                # self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
+                # draw a transparent rectangle around the object
+                line = self.canvas.create_rectangle(min_x-2, min_y-2, max_x+2, max_y+2, width=1, dash=3, outline="blue")
+
+                # At each of the corners, draw a small circle, based on min_x, min_y
+                # And then scale it
+                circle = self.canvas.create_oval(min_x-3, min_y-3, min_x-1, min_y-1, fill="blue")
+                self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
+
+                circle = self.canvas.create_oval(max_x+3, min_y-3, max_x+1, min_y-1, fill="blue")
+                self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
+
+                circle = self.canvas.create_oval(min_x-3, max_y+3, min_x-1, max_y+1, fill="blue")
+                self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
+
+                circle = self.canvas.create_oval(max_x+3, max_y+3, max_x+1, max_y+1, fill="blue")
+                self.canvas.scale(circle, 0, 0, self.scale_factor, self.scale_factor)
+
+                self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
 
         return
 
