@@ -11,7 +11,7 @@ import re
 # LaserProject is a collection of LaserObjects
 class LaserProject:
     def __init__(self):
-        self.laser_objects = []
+        self.laser_objects = list()
         self.shapes_as_points = None
         self.gcode = None
         self.gcode_header = None
@@ -159,8 +159,8 @@ class LaserProject:
 
             for point_list in shape["point_lists"]:
 
-                speed = f"F{shape["speed"]}"
-                power = f"S{shape["power"]}"
+                speed = f"F{shape['speed']}"
+                power = f"S{shape['power']}"
                 passes = shape["passes"]
 
                 shape_gcode = convert_points_to_gcode(point_list)
@@ -313,6 +313,9 @@ class LaserObject:
 
         # This is the origin of the laser object, all other cartesian points are relative to this
         self.location = (0, 0)
+
+        # This is the bounding box of the object, used to display the item when it is selected
+        self.bounding_box = (0,0,0,0)
 
     def translate(self, x, y ):
 
