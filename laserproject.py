@@ -559,6 +559,57 @@ class LaserObject:
 
         return
 
+    # Fill the shapes with ilnes
+    def fill(self):
+
+        # Initialize the list to store start and end coordinates of lines
+        lines = []
+
+        # Get all the points
+        for shape in self.shapes:
+            polygon = shape.copy()
+            polygon.pop()
+
+        ###
+            # Extracting the ymin and ymax values from the polygon vertices
+            y_values = [point[1] for point in polygon]
+            ymin, ymax = min(y_values), max(y_values)
+
+            # Iterate through each y value from ymin to ymax
+            for y in range(ymin, ymax + 1):
+                intersections = []
+
+                # Find intersections with the polygon edges
+                for i in range(len(polygon)):
+                    start, end = polygon[i], polygon[(i + 1) % len(polygon)]
+
+                    # Skip horizontal edges
+                    if start[1] == end[1]:
+                        continue
+
+                    # Ensure that the scanline intersects the edge vertically
+                    if (y >= start[1] and y < end[1]) or (y >= end[1] and y < start[1]):
+                        # Calculate the x value of the intersection using linear interpolation
+                        x = start[0] + (y - start[1]) * (end[0] - start[0]) / (end[1] - start[1])
+                        intersections.append(x)
+
+                # Sort the intersections to ensure correct filling
+                intersections.sort()
+
+                # Fill between each pair of intersections
+                for i in range(0, len(intersections), 2):
+                    if i + 1 < len(intersections):  # Ensure there's a pair
+                        print(f"Drawing line from ({intersections[i]}, {y}) to ({intersections[i + 1]}, {y})")
+                        start = (intersections[i], y)
+                        stop = (intersections[i + 1], y)
+                        lines.append([start, stop])
+
+        # Add the lines to the shapes
+        self.shapes.extend(lines)
+
+        return
+
+
 # A derived class for Text objects, based on LaserObject
 class LaserTextObject(LaserObject):
 

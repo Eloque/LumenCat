@@ -125,6 +125,14 @@ class App(customtkinter.CTk):
                                                             text_color=("gray10", "#DCE4EE"))
         self.button_resize_canvas.grid(row=6, column=0, padx=20, pady=10)
 
+        self.button_load_test = customtkinter.CTkButton(master=self.control_bar,
+                                                        command=self.material_test,
+                                                        text="Material test",
+                                                        fg_color="transparent",
+                                                        border_width=2,
+                                                        text_color=("gray10", "#DCE4EE"))
+        self.button_load_test.grid(row=7, column=0, padx=20, pady=10)
+
         # create main canvas frame
         self.main_frame = CTkXYFrame(self, width=600, height=600, corner_radius=0)
         # self.main_frame = CTkXYFrame(self, width=600, height=600, corner_radius=0)
@@ -335,21 +343,22 @@ class App(customtkinter.CTk):
 
     def create_triangle(self):
 
-        # Check if we have a LaserProject, create it if needed
-        if self.laser_project is None:
-            self.laser_project = LaserProject()
+        self.laser_project = LaserProject()
 
         # Create a LaserObject
-        laser_object = LaserObject(600, 250, 1)
-        laser_object.location = (0, 0)
+        laserobject = LaserObject(400, 700, 10)
+        laserobject.location = (0, 0)
 
-        laser_object.add_polygon(points)
+        # laserobject.add_rectangle(10,10,12,10)
 
-        # Add the LaserObject to the LaserProject
-        self.laser_project.laser_objects.append(laser_object)
+        laserobject.add_polygon([(10.0, 10), (22.0, 10), (16.0, 22), (10.0, 10)])
+        self.laser_project.laser_objects.append(laserobject)
+        laserobject.fill()
 
-        # And draw all it
+        #laserobject.add_polygon([(10.0, 10), (22.0, 10)])
+
         self.draw_all_elements()
+
 
     def create_circle(self):
 
@@ -573,36 +582,24 @@ class App(customtkinter.CTk):
         # make the sword 3 times as big
         sword = [(x * 3, y * 3) for x, y in sword]
 
-        # laser_object.add_polygon(sword)
-        # laser_object.add_circle(4.5, 4.5, 1)
+        laser_object.add_polygon(sword)
 
-        # # Copy sword
-        # sword2 = sword.copy()
-        #
-        # # rotate the sword 180 degrees
-        # sword2 = [(-x, -y) for x, y in sword2]
-        #
-        # # and move the sword2 up by 50
-        # sword2 = [(x+78, y + 48 + 10) for x, y in sword2]
-        #
-        # laser_object.add_polygon(sword2)
-        # laser_object.add_circle(78-4.5, 10+48-4.5, 1)
-        #
-        # laser_object.add_polygon(sword2)
+        print(sword)
 
-        # create a copy of sword, move it to the right by 50
-        for i in range(0, 1):
-            sword2 = sword.copy()
-            sword2 = [(x + 35 * i, y + 0) for x, y in sword2]
-
-            laser_object.add_circle(35 * i + 4.5, 4.5, 1)
-            laser_object.add_polygon(sword2)
+        # # create a copy of sword, move it to the right by 50
+        # for i in range(0, 1):
+        #     sword2 = sword.copy()
+        #     sword2 = [(x + 35 * i, y + 0) for x, y in sword2]
+        #
+        #     laser_object.add_circle(35 * i + 4.5, 4.5, 1)
+        #     laser_object.add_polygon(sword2)
 
         # sword3 = sword.copy()
         # sword3 = [(x+35, y) for x, y in sword3]
         # laser_object.add_polygon(sword3)
 
         self.laser_project.laser_objects.append(laser_object)
+        laser_object.fill()
         self.draw_all_elements()
 
     def create_terrain_base(self):
@@ -761,6 +758,45 @@ class App(customtkinter.CTk):
                     self.current_selected_object = box
 
                     break
+
+    def material_test(self):
+
+        # This creates a laser project with a material test
+        # It creates a grid of squares, each with a different speed and power
+
+        self.laser_project = LaserProject()
+
+        interval = 0.1
+        min_speed = 200
+        max_speed = 3000
+        min_power = 10
+        max_power = 100
+
+        steps = 10
+
+        x = 0
+        y = 0
+
+        for speed in range(min_speed, max_speed, int((max_speed - min_speed) / steps)):
+
+            y = 0
+
+            for power in range(min_power, max_power, int((max_power - min_power) / steps)):
+
+                laser_object = LaserObject(speed, power, 1)
+                laser_object.add_rectangle(0, 0, 10, 10)
+
+                laser_object.location = (x, y)
+                self.laser_project.laser_objects.append(laser_object)
+
+                print(speed, power)
+
+                y += 12
+
+            x += 12
+
+        self.draw_all_elements()
+
 
 if __name__ == "__main__":
     app = App()
