@@ -131,7 +131,10 @@ class App(customtkinter.CTk):
                                                         fg_color="transparent",
                                                         border_width=2,
                                                         text_color=("gray10", "#DCE4EE"))
-        self.button_load_test.grid(row=7, column=0, padx=20, pady=10)
+
+        self.button_load_test.grid(row=7, column=0, padx=20, pady=10, columnspan=2)
+
+
 
         # create main canvas frame
         self.main_frame = CTkXYFrame(self, width=600, height=600, corner_radius=0)
@@ -761,6 +764,11 @@ class App(customtkinter.CTk):
 
     def material_test(self):
 
+        from materialtest import MaterialTest
+        material_test = MaterialTest()
+        material_test.show()
+
+        return
         # This creates a laser project with a material test
         # It creates a grid of squares, each with a different speed and power
 
