@@ -3,10 +3,16 @@ import customtkinter
 from CTkXYFrame import *
 import tkinter as tk
 
+from laserproject import LaserProject, LaserObject, LaserTextObject
+
+
 class MaterialTest:
-    def __init__(self):
-        self.root = customtkinter.CTkToplevel()
+    def __init__(self, parent):
+        self.root = customtkinter.CTkToplevel(parent)
+        self.parent = parent
         root = self.root
+
+        self.laser_project = None
 
         root.title("Material Test")
 
@@ -85,6 +91,15 @@ class MaterialTest:
         self.max_speed.set(2000)
         self.speed_steps.set(4)
 
+        # Function to handle the closing of the toplevel
+        def on_close():
+            self.parent.laser_project = self.laser_project
+            self.parent.draw_all_elements()
+            self.root.destroy()
+
+        # Set the close event handler
+        self.root.protocol("WM_DELETE_WINDOW", on_close)
+
     def show(self):
         # Goram ugly hack to make the window appear on top
         self.root.after(100, self.root.lift)
@@ -121,6 +136,50 @@ class MaterialTest:
         for power in range(min_power, max_power, (max_power - min_power) // power_steps):
             x += 25
             self.canvas.create_text(x, 280, text=str(power))
+
+        # And here the real update is, creating the laser project and laser objects
+        # Create laser project
+        self.laser_project = LaserProject()
+
+        y = 6 + 2
+        x = 0
+
+        text_power = 20
+        text_speed = 600
+        for speed in range(min_speed, max_speed, (max_speed - min_speed) // speed_steps):
+
+            laser_object = LaserTextObject(speed, "../fonts/Ubuntu-R.ttf", 8, text_speed, text_power, 1)
+            laser_object.location = (x, y)
+            self.laser_project.laser_objects.append(laser_object)
+            y += 12
+
+        y = 0
+        x = 12 - 1
+        for power in range(min_power, max_power, (max_power - min_power) // power_steps):
+            laser_object = LaserTextObject(power, "../fonts/Ubuntu-R.ttf", 8, text_speed, text_power, 1)
+            laser_object.location = (x, y)
+            self.laser_project.laser_objects.append(laser_object)
+            x += 12
+
+        x = 8
+        y = 4
+
+        # Create laser objects
+        for speed in range(min_speed, max_speed, (max_speed - min_speed) // speed_steps):
+
+            for power in range(min_power, max_power, (max_power - min_power) // power_steps):
+                laser_object = LaserObject(speed, power, 1)
+                laser_object.add_rectangle(x, y, 10, 10)
+
+                self.laser_project.laser_objects.append(laser_object)
+
+                x += 12
+
+            x = 8
+            y += 12
+
+        self.parent.laser_project = self.laser_project
+        self.parent.draw_all_elements()
 
         pass
 

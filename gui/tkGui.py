@@ -765,7 +765,7 @@ class App(customtkinter.CTk):
     def material_test(self):
 
         from materialtest import MaterialTest
-        material_test = MaterialTest()
+        material_test = MaterialTest(self)
         material_test.show()
 
         return

@@ -615,7 +615,7 @@ class LaserTextObject(LaserObject):
 
     # This class has a font size, text and font
     def __init__(self, text, font, font_size, speed, power, passes):
-        self.text = text
+        self.text = str(text)
         self.font = font
         self.font_size = font_size
 
