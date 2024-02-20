@@ -1,6 +1,8 @@
 
 import customtkinter
-from CTkXYFrame import *
+from customtkinter import CTkFrame
+
+from CTkSpinbox import Spinbox
 import tkinter as tk
 
 from laserproject import LaserProject, LaserObject, LaserTextObject
@@ -16,10 +18,10 @@ class MaterialTest:
 
         root.title("Material Test")
 
-        frame = CTkXYFrame(root, width=660, height=330)
+        frame = CTkFrame(root, width=960, height=640)
         frame.grid(row=0, column=0, padx=10, pady=10)
 
-        self.canvas = customtkinter.CTkCanvas(frame, width=300, height=300)
+        self.canvas = customtkinter.CTkCanvas(frame, width=500, height=500)
         self.canvas.grid(row=0, column=0, padx=10, pady=10, rowspan=2)
 
         settings_frame = customtkinter.CTkFrame(frame, width=300)
@@ -38,58 +40,52 @@ class MaterialTest:
 
         power_label = customtkinter.CTkLabel(settings_frame, text="Power")
 
-        self.min_power = tk.StringVar()
         min_power_label = customtkinter.CTkLabel(settings_frame, text="Min")
-        min_power_entry = customtkinter.CTkEntry(settings_frame, width=60, textvariable=self.min_power)
+        self.min_power_entry = Spinbox(settings_frame, width=130, step_size=5, callback=self.update)
 
-        self.max_power = tk.StringVar()
         max_power_label = customtkinter.CTkLabel(settings_frame, text="Max")
-        max_power_entry = customtkinter.CTkEntry(settings_frame, width=60, textvariable=self.max_power)
+        self.max_power_entry = Spinbox(settings_frame, width=130, step_size=5, callback=self.update)
 
-        self.power_steps = tk.StringVar()
         steps_power_label = customtkinter.CTkLabel(settings_frame, text="Steps")
-        steps_power_entry = customtkinter.CTkEntry(settings_frame, width=60, textvariable=self.power_steps)
+        self.steps_power_entry = Spinbox(settings_frame, width=130, step_size=1, callback=self.update)
 
         speed_label = customtkinter.CTkLabel(settings_frame, text="Speed")
 
-        self.min_speed = tk.StringVar()
         min_speed_label = customtkinter.CTkLabel(settings_frame, text="Min")
-        min_speed_entry = customtkinter.CTkEntry(settings_frame, width=60, textvariable=self.min_speed)
+        self.min_speed_entry = Spinbox(settings_frame, width=130, step_size=50, callback=self.update)
 
-        self.max_speed = tk.StringVar()
         max_speed_label = customtkinter.CTkLabel(settings_frame, text="Max")
-        max_speed_entry = customtkinter.CTkEntry(settings_frame, width=60, textvariable=self.max_speed)
+        self.max_speed_entry = Spinbox(settings_frame, width=130, step_size=50, callback=self.update)
 
-        self.speed_steps = tk.StringVar()
         steps_speed_label = customtkinter.CTkLabel(settings_frame, text="Steps")
-        steps_speed_entry = customtkinter.CTkEntry(settings_frame, width=60, textvariable=self.speed_steps)
+        self.steps_speed_entry = Spinbox(settings_frame, width=130, step_size=1, callback=self.update)
 
         settings_label.grid(row=0, column=0, columnspan=5, padx=4, pady=2)
 
         power_label.grid(row=1, column=0, padx=4, pady=2)
         min_power_label.grid(row=1, column=1, padx=4, pady=2, sticky="e")
-        min_power_entry.grid(row=1, column=2, padx=4, pady=2)
+        self.min_power_entry.grid(row=1, column=2, padx=4, pady=2)
         max_power_label.grid(row=1, column=3, padx=4, pady=2, sticky="e")
-        max_power_entry.grid(row=1, column=4, padx=4, pady=2)
+        self.max_power_entry.grid(row=1, column=4, padx=4, pady=2)
         steps_power_label.grid(row=2, column=1, padx=4, pady=2, sticky="e")
-        steps_power_entry.grid(row=2, column=2, padx=4, pady=2)
+        self.steps_power_entry.grid(row=2, column=2, padx=4, pady=2)
 
         speed_label.grid(row=3, column=0, padx=4, pady=2)
         min_speed_label.grid(row=3, column=1, padx=4, pady=2, sticky="e")
-        min_speed_entry.grid(row=3, column=2, padx=4, pady=2)
+        self.min_speed_entry.grid(row=3, column=2, padx=4, pady=2)
         max_speed_label.grid(row=3, column=3, padx=4, pady=2, sticky="e")
-        max_speed_entry.grid(row=3, column=4, padx=4, pady=2)
+        self.max_speed_entry.grid(row=3, column=4, padx=4, pady=2)
         steps_speed_label.grid(row=4, column=1, padx=4, pady=2, sticky="e")
-        steps_speed_entry.grid(row=4, column=2, padx=4, pady=2)
+        self.steps_speed_entry.grid(row=4, column=2, padx=4, pady=2)
 
         # Set all the values to reasonable defaults
-        self.min_power.set(40)
-        self.max_power.set(90)
-        self.power_steps.set(4)
+        self.min_power_entry.set(40)
+        self.max_power_entry.set(90)
+        self.steps_power_entry.set(4)
 
-        self.min_speed.set(200)
-        self.max_speed.set(2000)
-        self.speed_steps.set(4)
+        self.min_speed_entry.set(200)
+        self.max_speed_entry.set(2000)
+        self.steps_speed_entry.set(4)
 
         # Function to handle the closing of the toplevel
         def on_close():
@@ -108,45 +104,34 @@ class MaterialTest:
     def update(self):
 
         # Get the values from the settings
-        min_power = int(self.min_power.get())
-        max_power = int(self.max_power.get())
-        power_steps = int(self.power_steps.get())
+        min_power = int(self.min_power_entry.get())
+        max_power = int(self.max_power_entry.get())
+        power_steps = int(self.steps_power_entry.get())
 
-        min_speed = int(self.min_speed.get())
-        max_speed = int(self.max_speed.get())
-        speed_steps = int(self.speed_steps.get())
+        min_speed = int(self.min_speed_entry.get())
+        max_speed = int(self.max_speed_entry.get())
+        speed_steps = int(self.steps_speed_entry.get())
 
-        # Okay, we are going to do the speed vertical
-        # and the power horizontal
-
-        # First, clear the canvas
-        self.canvas.delete("all")
-
-        # For each speed step, write the speed on canvas
-        y = 280
-        for speed in range(min_speed, max_speed, (max_speed - min_speed) // speed_steps):
-            y -= 25
-            self.canvas.create_text(20, y, text=str(speed))
-            x = 25
-            for power in range(min_power, max_power, (max_power - min_power) // power_steps):
-                x += 25
-                self.canvas.create_rectangle(x, y+10, x + 20, y - 10, fill="")
-
-        x = 35
-        for power in range(min_power, max_power, (max_power - min_power) // power_steps):
-            x += 25
-            self.canvas.create_text(x, 280, text=str(power))
-
-        # And here the real update is, creating the laser project and laser objects
         # Create laser project
         self.laser_project = LaserProject()
+
+        step_size = (max_speed - min_speed) / (speed_steps - 1) if speed_steps > 1 else 0
+        speed_values = [min_speed + i * step_size for i in range(speed_steps)]
+        # convert all speed values to integers
+        speed_values = [int(speed) for speed in speed_values]
+
+        step_size = (max_power - min_power) / (power_steps - 1) if power_steps > 1 else 0
+        power_values = [min_power + i * step_size for i in range(power_steps)]
+        # convert all power values to integers
+        power_values = [int(power) for power in power_values]
 
         y = 6 + 2
         x = 0
 
         text_power = 20
         text_speed = 600
-        for speed in range(min_speed, max_speed, (max_speed - min_speed) // speed_steps):
+
+        for speed in speed_values:
 
             laser_object = LaserTextObject(speed, "../fonts/Ubuntu-R.ttf", 8, text_speed, text_power, 1)
             laser_object.location = (x, y)
@@ -155,7 +140,7 @@ class MaterialTest:
 
         y = 0
         x = 12 - 1
-        for power in range(min_power, max_power, (max_power - min_power) // power_steps):
+        for power in power_values:
             laser_object = LaserTextObject(power, "../fonts/Ubuntu-R.ttf", 8, text_speed, text_power, 1)
             laser_object.location = (x, y)
             self.laser_project.laser_objects.append(laser_object)
@@ -165,9 +150,9 @@ class MaterialTest:
         y = 4
 
         # Create laser objects
-        for speed in range(min_speed, max_speed, (max_speed - min_speed) // speed_steps):
+        for speed in speed_values:
 
-            for power in range(min_power, max_power, (max_power - min_power) // power_steps):
+            for power in power_values:
                 laser_object = LaserObject(speed, power, 1)
                 laser_object.add_rectangle(x, y, 10, 10)
 
@@ -178,8 +163,67 @@ class MaterialTest:
             x = 8
             y += 12
 
-        self.parent.laser_project = self.laser_project
-        self.parent.draw_all_elements()
+        self.draw_all_elements()
 
-        pass
+    def draw_all_elements(self):
+
+        min_y = 400
+        max_x = 0
+
+        # First, clear the canvas
+        self.canvas.delete("all")
+
+        # Get the min and max values for x and y
+        for laser_object in self.laser_project.laser_objects:
+            for shape in laser_object.get_process_points():
+                for point in shape:
+                    if point[0] > max_x:
+                        max_x = point[0]
+
+                    if point[1] < min_y:
+                        min_y = point[1]
+
+        max_y = 400
+        min_x = 0
+
+        # For Y we need a spread of max_y - min_y
+        spread_y = max_y - min_y
+
+        # For X we need a spared of max_x - min_x
+        spread_x = max_x - min_x
+
+        if spread_x > spread_y:
+            scale_factor = 490 / spread_x
+        else:
+            scale_factor = 490 / spread_y
+
+        for laser_object in self.laser_project.laser_objects:
+
+            # Get the points for the object
+            object_points = laser_object.get_process_points()
+
+            # Rescale all the points from it 400x400 to 300x300
+            for shape in object_points:
+                for point in shape:
+                    point[0] = point[0] * scale_factor
+                    point[0] += 5
+
+                    p = point[1]
+                    p = (p - min_y) * scale_factor
+                    p += 5
+
+                    point[1] = p
+
+            # All of these individual lists, contain individual shapes
+            for shape in object_points:
+                current_point = shape[0]
+
+                for point in shape:
+                    line = self.canvas.create_line(current_point[0], current_point[1],
+                                                   point[0], point[1], fill="black", width=1)
+
+                    # add a tag to the line
+                    self.canvas.addtag_withtag("laser_object", line)
+                    current_point = point
+
 
