@@ -591,7 +591,6 @@ class App(customtkinter.CTk):
 
         laser_object.add_polygon(sword)
 
-        print(sword)
 
         # # create a copy of sword, move it to the right by 50
         # for i in range(0, 1):
@@ -606,7 +605,9 @@ class App(customtkinter.CTk):
         # laser_object.add_polygon(sword3)
 
         laser_text = LaserTextObject("Sword", "../fonts/Ubuntu-R.ttf", 20, 600, 250, 1)
+        laser_text.location = (20,20)
         self.laser_project.laser_objects.append(laser_text)
+
         self.laser_project.laser_objects.append(laser_object)
         # laser_object.fill()
         self.draw_all_elements()

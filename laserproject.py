@@ -736,6 +736,9 @@ class LaserTextObject(LaserObject):
                     if point[1] > max_y:
                         max_y = point[1]
 
+
+        polygons = list()
+
         # Convert all the letters to cartesian points
         for letter_object in letter_objects:
 
@@ -744,20 +747,23 @@ class LaserTextObject(LaserObject):
 
             # Really confused here!
             # These are process points, we need to convert them to cartesian points
-            letter_process_points = convert_process_to_cartesian(letter_process_points, max_y = max_y)
+            letter_process_points = convert_process_to_cartesian(letter_process_points, max_y=max_y)
 
-            # Add those points to the shapes list -- Is this it?
-            letter_object.shapes.extend(letter_process_points)
+            # Add those to the polygons
+            polygons.append(letter_process_points)
 
-            # And then get the process points for those
-            shape_points = letter_object.get_process_points()
+        # Create a laserobject to give all these polygons to!
+        laser_object = LaserObject(self.speed, self.power, self.passes)
 
-            # And extend the process points list
-            process_points.extend(shape_points)
+        for letter in polygons:
+            for polygon in letter:
+                laser_object.add_polygon(polygon)
 
-        points_object = Points(process_points)
+        laser_object.location = self.location
 
-        return points_object
+        # Get the points
+        return laser_object.get_process_points()
+
 
     def get_svg_element(self):
 
