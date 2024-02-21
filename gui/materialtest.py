@@ -1,9 +1,6 @@
-
 import customtkinter
 from customtkinter import CTkFrame
-
 from CTkSpinbox import Spinbox
-import tkinter as tk
 
 from laserproject import LaserProject, LaserObject, LaserTextObject
 
@@ -155,6 +152,7 @@ class MaterialTest:
             for power in power_values:
                 laser_object = LaserObject(speed, power, 1)
                 laser_object.add_rectangle(x, y, 10, 10)
+                laser_object.fill()
 
                 self.laser_project.laser_objects.append(laser_object)
 
@@ -167,63 +165,61 @@ class MaterialTest:
 
     def draw_all_elements(self):
 
-        min_y = 400
-        max_x = 0
+        # Initialize to extreme values to ensure they are updated
+        max_x = -float('inf')
+        min_y = float('inf')
 
-        # First, clear the canvas
-        self.canvas.delete("all")
-
-        # Get the min and max values for x and y
+        # Iterate through points to find min and max values
         for laser_object in self.laser_project.laser_objects:
             for shape in laser_object.get_process_points():
-                for point in shape:
-                    if point[0] > max_x:
-                        max_x = point[0]
+                for point in shape.points:
+                    max_x = max(max_x, point[0])
+                    min_y = min(min_y, point[1])
 
-                    if point[1] < min_y:
-                        min_y = point[1]
-
+        # Assume max_y and min_x are constants
         max_y = 400
         min_x = 0
 
-        # For Y we need a spread of max_y - min_y
+        # Calculate spreads
+        spread_x = max_x - min_x
         spread_y = max_y - min_y
 
-        # For X we need a spared of max_x - min_x
-        spread_x = max_x - min_x
+        # Determine the scale factor based on the larger spread
+        scale_factor = 490 / max(spread_x, spread_y)
 
-        if spread_x > spread_y:
-            scale_factor = 490 / spread_x
-        else:
-            scale_factor = 490 / spread_y
+        # Clear the canvas
+        self.canvas.delete("all")
 
         for laser_object in self.laser_project.laser_objects:
 
-            # Get the points for the object
             object_points = laser_object.get_process_points()
 
             # Rescale all the points from it 400x400 to 300x300
             for shape in object_points:
-                for point in shape:
-                    point[0] = point[0] * scale_factor
-                    point[0] += 5
-
-                    p = point[1]
-                    p = (p - min_y) * scale_factor
-                    p += 5
-
-                    point[1] = p
-
-            # All of these individual lists, contain individual shapes
-            for shape in object_points:
                 current_point = shape[0]
+                for i, point in enumerate(shape):
+                    # Rescale points directly
+                    point[0] = (point[0] * scale_factor) + 5
+                    point[1] = ((point[1] - min_y) * scale_factor) + 5
 
-                for point in shape:
-                    line = self.canvas.create_line(current_point[0], current_point[1],
-                                                   point[0], point[1], fill="black", width=1)
+                    # Lets use the power as the color, 100 = black, 0 = grey
+                    color = "#%02x%02x%02x" % (255, 255 - laser_object.power, 255 - laser_object.power)
+                    # Cool red color, but I was going for black and white
 
-                    # add a tag to the line
-                    self.canvas.addtag_withtag("laser_object", line)
+                    factor = 100 - laser_object.power
+                    power = 128 * (factor / 100)
+                    parameter = int(16 + power)
+
+                    # That makes a nice "red" color, but I was going for black and white
+                    color = "#%02x%02x%02x" % (parameter, parameter, parameter)
+
+                    print(color)
+
+                    # Draw lines from the current point to the next, starting from the second iteration
+                    if i > 0:
+                        self.canvas.create_line(current_point[0], current_point[1],
+                                                point[0], point[1], fill=color, width=1)
+
                     current_point = point
 
 

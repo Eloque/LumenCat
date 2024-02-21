@@ -1,12 +1,26 @@
 # We will have a class that can be used to covert SVG paths to GCode
 # Per path object, we can set the speed and power of the laser
 # This means that the class is en essence a list of SVG objects with a speed and power
-
+import datetime
 # That would mean that there should be a class for SVG objects
 import xml.etree.ElementTree as elementTree
+
+import numpy as np
+
 from text import text_to_svg_path
 from curvetopoints import quadratic_bezier
 import re
+
+
+# Points contains a list of points and instructions on how those points should be
+# Such as if the points should be considered a fill, or a dotted line
+class Points:
+
+    def __init__(self, points = None, fill = False, dotted = False):
+        self.points = points
+        self.fill = fill
+        self.dotted = dotted
+
 
 # LaserProject is a collection of LaserObjects
 class LaserProject:
@@ -292,8 +306,8 @@ class LaserProject:
 
         return laser_object, laser_text_object
 
-# A LaserObject is an SVG object, that can be converted to GCode
-# It is a path object, or needs conversion to a path object first
+
+# A LaserObject is a points and shapes based object, that can be converted to GCode
 class LaserObject:
 
     def __init__(self, speed, power, passes, svg_element = None):
@@ -316,6 +330,13 @@ class LaserObject:
 
         # This is the bounding box of the object, used to display the item when it is selected
         self.bounding_box = (0,0,0,0)
+
+    def get_info(self):
+
+        # create a string with the information, power, speed and passes
+        info = f"Speed: {self.speed}, Power: {self.power}, Passes: {self.passes}"
+
+        return info
 
     def translate(self, x, y ):
 
@@ -355,52 +376,20 @@ class LaserObject:
         # Create empty list
         process_points = list()
 
-        # Go through the shapes
         for shape in self.shapes:
-
             shape_points = []
-
-            for point in shape:
-
-                # Add the points to the list
+            for point in shape.points:
+                # Adjust location and flip around the Y-axis in one step
                 x = point[0] + self.location[0]
-                y = point[1] + self.location[1]
+                y = 400 - (point[1] + self.location[1])  # Assuming 400 is the Y-axis flip value
 
-                result = []
-                result.append(x)
-                result.append(y)
-
-                shape_points.append(result)
-
-            # Hack, hacky code, hacky code
-            # This will flip it !
-            for points in shape_points:
-                # Flip it around the Y axis
-                points[1] = 400 - points[1]
+                shape_points.append([x, y])
 
             process_points.append(shape_points)
 
         return process_points
 
 
-
-    def convert_process_to_cartesian(self, process_points):
-        raise NotImplementedError
-        # # These points are now upside down, flip them
-        # # Now we have the maximum y and we can invert the points
-        # max_y = 0
-        # for list_of_points in process_points:
-        #     for point in list_of_points:
-        #         if point[1] > max_y:
-        #             max_y = point[1]
-        #
-        # # Now we have the maximum y and we can invert the points
-        # for list_of_points in process_points:
-        #     for point in list_of_points:
-        #         point[1] = max_y - point[1]
-        #
-        # # They are now cartesian points, we need to convert them to process points
-        # self.cartesian_points = process_points
 
 
     def get_path(self):
@@ -454,25 +443,28 @@ class LaserObject:
     # The rectangle is defined by the bottom left corner, and the width and height
     def add_rectangle(self, x, y, width, height):
 
+        # Create a points object
+        points = Points()
+
         # Create a list of points
-        points = list()
+        points.points = list()
 
         # Bottom left corner
-        points.append((x, y))
+        points.points.append((x, y))
 
         # Top left corner
-        points.append((x, y + height))
+        points.points.append((x, y + height))
 
         # Top right corner
-        points.append((x + width, y + height))
+        points.points.append((x + width, y + height))
 
         # Bottom right corner
-        points.append((x + width, y))
+        points.points.append((x + width, y))
 
         # And close the shape
-        points.append((x, y))
+        points.points.append((x, y))
 
-        # Add this rectangle to the list of shapes
+        # Add this circle to the list of shapes
         self.shapes.append(points)
 
         return
@@ -516,15 +508,19 @@ class LaserObject:
         # Take the last point, and add it to the beginning
         points.append(points[0])
 
-        # Add this rectangle to the list of shapes
-        self.shapes.append(points)
+        points_object = Points(points)
+
+        # Add this circle to the list of shapes
+        self.shapes.append(points_object)
 
         return
 
     def add_polygon(self, points):
 
-        # Add this polygon to the list of shapes
-        self.shapes.append(points)
+        points_object = Points(points)
+
+        # Add this circle to the list of shapes
+        self.shapes.append(points_object)
 
         return
 
@@ -554,8 +550,10 @@ class LaserObject:
         # Take the last point, and add it to the beginning
         points.append(points[0])
 
+        points_object = Points(points)
+
         # Add this circle to the list of shapes
-        self.shapes.append(points)
+        self.shapes.append(points_object)
 
         return
 
@@ -565,18 +563,19 @@ class LaserObject:
         # Initialize the list to store start and end coordinates of lines
         lines = []
 
+        step_size = 0.1
+
         # Get all the points
         for shape in self.shapes:
-            polygon = shape.copy()
+            polygon = shape.points.copy()
             polygon.pop()
 
-        ###
             # Extracting the ymin and ymax values from the polygon vertices
             y_values = [point[1] for point in polygon]
             ymin, ymax = min(y_values), max(y_values)
 
             # Iterate through each y value from ymin to ymax
-            for y in range(ymin, ymax + 1):
+            for y in np.arange(ymin, ymax + step_size, step_size):
                 intersections = []
 
                 # Find intersections with the polygon edges
@@ -599,7 +598,6 @@ class LaserObject:
                 # Fill between each pair of intersections
                 for i in range(0, len(intersections), 2):
                     if i + 1 < len(intersections):  # Ensure there's a pair
-                        print(f"Drawing line from ({intersections[i]}, {y}) to ({intersections[i + 1]}, {y})")
                         start = (intersections[i], y)
                         stop = (intersections[i + 1], y)
                         lines.append([start, stop])
@@ -621,7 +619,6 @@ class LaserTextObject(LaserObject):
 
         # Call the parent constructor
         super().__init__(speed, power, passes)
-
 
     # Override the get_shape_as_points method
     # This will represent the text as a list of points, but accounting for the fact
@@ -655,7 +652,7 @@ class LaserTextObject(LaserObject):
         letter_objects = list()
         letter_process_points_list = list()
 
-        # Get all the lettesr
+        # Get all the letters
         for letter_path in letter_paths:
 
             # Create a LaserObject
@@ -718,7 +715,7 @@ class LaserTextObject(LaserObject):
         letter_objects = list()
         letter_process_points_list = list()
 
-        # Get all the lettesr
+        # Get all the letters
         for letter_path in letter_paths:
 
             # Create a LaserObject
@@ -749,7 +746,7 @@ class LaserTextObject(LaserObject):
             # These are process points, we need to convert them to cartesian points
             letter_process_points = convert_process_to_cartesian(letter_process_points, max_y = max_y)
 
-            # Add those points to the shapes list
+            # Add those points to the shapes list -- Is this it?
             letter_object.shapes.extend(letter_process_points)
 
             # And then get the process points for those
@@ -758,7 +755,9 @@ class LaserTextObject(LaserObject):
             # And extend the process points list
             process_points.extend(shape_points)
 
-        return process_points
+        points_object = Points(process_points)
+
+        return points_object
 
     def get_svg_element(self):
 

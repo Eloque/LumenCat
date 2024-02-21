@@ -10,6 +10,7 @@ from laserproject import LaserProject, LaserObject, LaserTextObject
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
+from materialtest import MaterialTest
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -174,6 +175,9 @@ class App(customtkinter.CTk):
 
         self.selection_label = customtkinter.CTkLabel(self.canvas_control_bar, text="Selection:", anchor="w")
         self.selection_label.grid(row=0, column=2, padx=20, pady=2)
+
+        self.selection_info = customtkinter.CTkLabel(self.canvas_control_bar, text="None", anchor="w")
+        self.selection_info.grid(row=0, column=3, padx=20, pady=2)
 
         # Wait some time, so the window can be moved
         self.after(100, self.draw_all_elements)
@@ -601,8 +605,10 @@ class App(customtkinter.CTk):
         # sword3 = [(x+35, y) for x, y in sword3]
         # laser_object.add_polygon(sword3)
 
+        laser_text = LaserTextObject("Sword", "../fonts/Ubuntu-R.ttf", 20, 600, 250, 1)
+        self.laser_project.laser_objects.append(laser_text)
         self.laser_project.laser_objects.append(laser_object)
-        laser_object.fill()
+        # laser_object.fill()
         self.draw_all_elements()
 
     def create_terrain_base(self):
@@ -758,52 +764,17 @@ class App(customtkinter.CTk):
                     # Also move them by the bar size, but we probably need to do that somewhere else
                     self.canvas.move(box, self.bar_size, 0)
 
+                    # Add some info to the selection box
+                    self.selection_info.configure(text=laser_object.get_info())
+
                     self.current_selected_object = box
 
                     break
 
     def material_test(self):
 
-        from materialtest import MaterialTest
         material_test = MaterialTest(self)
         material_test.show()
-
-        return
-        # This creates a laser project with a material test
-        # It creates a grid of squares, each with a different speed and power
-
-        self.laser_project = LaserProject()
-
-        interval = 0.1
-        min_speed = 200
-        max_speed = 3000
-        min_power = 10
-        max_power = 100
-
-        steps = 10
-
-        x = 0
-        y = 0
-
-        for speed in range(min_speed, max_speed, int((max_speed - min_speed) / steps)):
-
-            y = 0
-
-            for power in range(min_power, max_power, int((max_power - min_power) / steps)):
-
-                laser_object = LaserObject(speed, power, 1)
-                laser_object.add_rectangle(0, 0, 10, 10)
-
-                laser_object.location = (x, y)
-                self.laser_project.laser_objects.append(laser_object)
-
-                print(speed, power)
-
-                y += 12
-
-            x += 12
-
-        self.draw_all_elements()
 
 
 if __name__ == "__main__":
