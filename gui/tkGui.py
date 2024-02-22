@@ -593,9 +593,7 @@ class App(customtkinter.CTk):
 
         laser_object.add_rounded_rectangle(30, 7.5 + 7.5 + 1.25 + 15 + 2.5, 50, 50, 5)
         laser_object.add_rounded_rectangle(30 + 5 + 50 + 25 + 2.5, 15 + 2.5, 100, 25, 5)
-        # laser_object.add_rounded_rectangle(30 + 10 + 100, 15+2.5, 50, 25, 5)
 
-        # laser_object.add_rounded_rectangle(30, 15+25+5+5, 50, 25, 5)
         laser_object.add_rounded_rectangle(30 + 5 + 50, 15 + 25 + 5 + 5, 50, 25, 5)
         laser_object.add_rounded_rectangle(30 + 10 + 100, 15 + 25 + 5 + 5, 50, 25, 5)
 

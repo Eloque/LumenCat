@@ -48,7 +48,10 @@ class LaserProject:
         return svg
 
     # Draw all the laser objects to a canvas
-    def draw_laser_objects(self, canvas, scale_factor = 1):
+    def draw_laser_objects(self, canvas, scale_factor=1):
+
+        canvas.create_line(5, 5, 5, 405, fill="black", width=1)
+
         # Go through the laser objects
         for laser_object in self.laser_objects:
 
@@ -70,7 +73,7 @@ class LaserProject:
                         color = "black"
 
                     line = canvas.create_line(current_point[0], current_point[1],
-                                               point[0], point[1], fill=color, width=1)
+                                              point[0], point[1], fill=color, width=1)
 
                     # add a tag to the line
                     canvas.addtag_withtag("laser_object", line)
@@ -89,6 +92,8 @@ class LaserProject:
 
             # Set the bounding box
             laser_object.bounding_box = (min_x, min_y, max_x, max_y)
+
+        return
 
     def get_svg(self):
 

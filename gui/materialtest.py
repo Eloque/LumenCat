@@ -1,5 +1,7 @@
 import customtkinter
 from customtkinter import CTkFrame
+
+import laserproject
 from CTkSpinbox import Spinbox
 
 from laserproject import LaserProject, LaserObject, LaserTextObject
@@ -150,7 +152,7 @@ class MaterialTest:
         for speed in speed_values:
 
             for power in power_values:
-                laser_object = LaserObject(speed, power, 1)
+                laser_object = LaserObject(speed, power*10, 1)
                 laser_object.add_rectangle(x, y, 10, 10)
                 laser_object.fill()
 
@@ -163,6 +165,8 @@ class MaterialTest:
 
         self.draw_all_elements()
 
+        return
+
     def draw_all_elements(self):
 
         # Initialize to extreme values to ensure they are updated
@@ -172,7 +176,7 @@ class MaterialTest:
         # Iterate through points to find min and max values
         for laser_object in self.laser_project.laser_objects:
             for shape in laser_object.get_process_points():
-                for point in shape.points:
+                for point in shape["points"]:
                     max_x = max(max_x, point[0])
                     min_y = min(min_y, point[1])
 
@@ -190,28 +194,38 @@ class MaterialTest:
         # Clear the canvas
         self.canvas.delete("all")
 
+        # Draw it to canvas
+#        self.laser_project.draw_laser_objects(self.canvas, scale_factor)
+
+#        print(count)
+
+        #self.canvas.create_line(5, 5, 5, 405, fill="black", width=1)
+
         for laser_object in self.laser_project.laser_objects:
 
             object_points = laser_object.get_process_points()
 
             # Rescale all the points from it 400x400 to 300x300
             for shape in object_points:
-                current_point = shape[0]
-                for i, point in enumerate(shape):
+
+                current_point = shape["points"][0]
+                for i, point in enumerate(shape["points"]):
                     # Rescale points directly
                     point[0] = (point[0] * scale_factor) + 5
                     point[1] = ((point[1] - min_y) * scale_factor) + 5
 
-                    # Lets use the power as the color, 100 = black, 0 = grey
-                    color = "#%02x%02x%02x" % (255, 255 - laser_object.power, 255 - laser_object.power)
-                    # Cool red color, but I was going for black and white
+                    color = laserproject.get_color_by_power(laser_object.power)
 
-                    factor = 100 - laser_object.power
-                    power = 128 * (factor / 100)
-                    parameter = int(16 + power)
-
-                    # That makes a nice "red" color, but I was going for black and white
-                    color = "#%02x%02x%02x" % (parameter, parameter, parameter)
+                    # # Lets use the power as the color, 100 = black, 0 = grey
+                    # color = "#%02x%02x%02x" % (255, 255 - laser_object.power, 255 - laser_object.power)
+                    # # Cool red color, but I was going for black and white
+                    #
+                    # factor = 100 - laser_object.power
+                    # power = 128 * (factor / 100)
+                    # parameter = int(16 + power)
+                    #
+                    # # That makes a nice "red" color, but I was going for black and white
+                    # color = "#%02x%02x%02x" % (parameter, parameter, parameter)
 
                     # Draw lines from the current point to the next, starting from the second iteration
                     if i > 0:
