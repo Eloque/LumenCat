@@ -294,51 +294,8 @@ class App(customtkinter.CTk):
 
     def draw_laser_project(self):
 
-        # Go through the laser objects
-        for laser_object in self.laser_project.laser_objects:
+        self.laser_project.draw_laser_objects(self.canvas, self.scale_factor)
 
-            # Get the points for the object
-            object_points = laser_object.get_process_points()
-
-            # Sort the object_points, so that objects that have fill "true" are drawn first
-            object_points = sorted(object_points, key=lambda x: x["fill"], reverse=True)
-
-            # All of these individual lists, contain individual shapes
-            for shape in object_points:
-                current_point = shape["points"][0]
-
-                for point in shape["points"]:
-
-                    if shape["fill"]:
-                        color = laserproject.get_color_by_power(laser_object.power)
-                    else:
-                        color = "black"
-
-                    line = self.canvas.create_line(current_point[0], current_point[1],
-                                                   point[0], point[1], fill=color, width=1)
-
-                    # add a tag to the line
-                    self.canvas.addtag_withtag("laser_object", line)
-                    self.canvas.scale(line, 0, 0, self.scale_factor, self.scale_factor)
-
-                    current_point = point
-
-            # Flatten the list
-            object_points = [item for sublist in object_points for item in sublist["points"]]
-
-            # Calculate the max and min x and y
-            max_x = max([x for x, y in object_points]) * self.scale_factor
-            min_x = min([x for x, y in object_points]) * self.scale_factor
-            max_y = max([y for x, y in object_points]) * self.scale_factor
-            min_y = min([y for x, y in object_points]) * self.scale_factor
-
-            # Set the bounding box
-            laser_object.bounding_box = (min_x, min_y, max_x, max_y)
-
-    def on_rect_click(self, event):
-        # Function called when the rectangle is clicked
-        print("Rectangle clicked")
-        print("Reference of the object called:", event)
 
     def create_gcode(self):
 

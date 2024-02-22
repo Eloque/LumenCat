@@ -47,6 +47,49 @@ class LaserProject:
 
         return svg
 
+    # Draw all the laser objects to a canvas
+    def draw_laser_objects(self, canvas, scale_factor = 1):
+        # Go through the laser objects
+        for laser_object in self.laser_objects:
+
+            # Get the points for the object
+            object_points = laser_object.get_process_points()
+
+            # Sort the object_points, so that objects that have fill "true" are drawn first
+            object_points = sorted(object_points, key=lambda x: x["fill"], reverse=True)
+
+            # All of these individual lists, contain individual shapes
+            for shape in object_points:
+                current_point = shape["points"][0]
+
+                for point in shape["points"]:
+
+                    if shape["fill"]:
+                        color = get_color_by_power(laser_object.power)
+                    else:
+                        color = "black"
+
+                    line = canvas.create_line(current_point[0], current_point[1],
+                                               point[0], point[1], fill=color, width=1)
+
+                    # add a tag to the line
+                    canvas.addtag_withtag("laser_object", line)
+                    canvas.scale(line, 0, 0, scale_factor, scale_factor)
+
+                    current_point = point
+
+            # Flatten the list
+            object_points = [item for sublist in object_points for item in sublist["points"]]
+
+            # Calculate the max and min x and y
+            max_x = max([x for x, y in object_points]) * scale_factor
+            min_x = min([x for x, y in object_points]) * scale_factor
+            max_y = max([y for x, y in object_points]) * scale_factor
+            min_y = min([y for x, y in object_points]) * scale_factor
+
+            # Set the bounding box
+            laser_object.bounding_box = (min_x, min_y, max_x, max_y)
+
     def get_svg(self):
 
         # First the header
