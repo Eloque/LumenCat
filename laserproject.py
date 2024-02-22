@@ -50,8 +50,6 @@ class LaserProject:
     # Draw all the laser objects to a canvas
     def draw_laser_objects(self, canvas, scale_factor=1):
 
-        canvas.create_line(5, 5, 5, 405, fill="black", width=1)
-
         # Go through the laser objects
         for laser_object in self.laser_objects:
 
@@ -67,10 +65,7 @@ class LaserProject:
 
                 for point in shape["points"]:
 
-                    if shape["fill"]:
-                        color = get_color_by_power(laser_object.power)
-                    else:
-                        color = "black"
+                    color = get_color_by_power(laser_object.power) if shape["fill"] else "black"
 
                     line = canvas.create_line(current_point[0], current_point[1],
                                               point[0], point[1], fill=color, width=1)

@@ -197,35 +197,26 @@ class MaterialTest:
         # Draw it to canvas
 #        self.laser_project.draw_laser_objects(self.canvas, scale_factor)
 
-#        print(count)
-
-        #self.canvas.create_line(5, 5, 5, 405, fill="black", width=1)
-
         for laser_object in self.laser_project.laser_objects:
 
             object_points = laser_object.get_process_points()
 
+            # Sort the object_points, so that objects that have fill "true" are drawn first
+            object_points = sorted(object_points, key=lambda x: x["fill"], reverse=True)
+
             # Rescale all the points from it 400x400 to 300x300
             for shape in object_points:
-
                 current_point = shape["points"][0]
+
                 for i, point in enumerate(shape["points"]):
                     # Rescale points directly
                     point[0] = (point[0] * scale_factor) + 5
                     point[1] = ((point[1] - min_y) * scale_factor) + 5
 
-                    color = laserproject.get_color_by_power(laser_object.power)
-
-                    # # Lets use the power as the color, 100 = black, 0 = grey
-                    # color = "#%02x%02x%02x" % (255, 255 - laser_object.power, 255 - laser_object.power)
-                    # # Cool red color, but I was going for black and white
-                    #
-                    # factor = 100 - laser_object.power
-                    # power = 128 * (factor / 100)
-                    # parameter = int(16 + power)
-                    #
-                    # # That makes a nice "red" color, but I was going for black and white
-                    # color = "#%02x%02x%02x" % (parameter, parameter, parameter)
+                    if shape["fill"]:
+                        color = laserproject.get_color_by_power(laser_object.power)
+                    else:
+                        color = "black"
 
                     # Draw lines from the current point to the next, starting from the second iteration
                     if i > 0:
