@@ -1,6 +1,8 @@
 import os
 
 import customtkinter
+
+import laserproject
 from CTkXYFrame import *
 
 from tkinter import filedialog
@@ -298,13 +300,22 @@ class App(customtkinter.CTk):
             # Get the points for the object
             object_points = laser_object.get_process_points()
 
+            # Sort the object_points, so that objects that have fill "true" are drawn first
+            object_points = sorted(object_points, key=lambda x: x["fill"], reverse=True)
+
             # All of these individual lists, contain individual shapes
             for shape in object_points:
-                current_point = shape[0]
+                current_point = shape["points"][0]
 
-                for point in shape:
+                for point in shape["points"]:
+
+                    if shape["fill"]:
+                        color = laserproject.get_color_by_power(laser_object.power)
+                    else:
+                        color = "black"
+
                     line = self.canvas.create_line(current_point[0], current_point[1],
-                                                   point[0], point[1], fill="black", width=1)
+                                                   point[0], point[1], fill=color, width=1)
 
                     # add a tag to the line
                     self.canvas.addtag_withtag("laser_object", line)
@@ -313,7 +324,7 @@ class App(customtkinter.CTk):
                     current_point = point
 
             # Flatten the list
-            object_points = [item for sublist in object_points for item in sublist]
+            object_points = [item for sublist in object_points for item in sublist["points"]]
 
             # Calculate the max and min x and y
             max_x = max([x for x, y in object_points]) * self.scale_factor
@@ -605,11 +616,11 @@ class App(customtkinter.CTk):
         # laser_object.add_polygon(sword3)
 
         laser_text = LaserTextObject("Sword", "../fonts/Ubuntu-R.ttf", 20, 600, 250, 1)
-        laser_text.location = (20,20)
+        laser_text.location = (40,20)
         self.laser_project.laser_objects.append(laser_text)
 
         self.laser_project.laser_objects.append(laser_object)
-        # laser_object.fill()
+        laser_object.fill()
         self.draw_all_elements()
 
     def create_terrain_base(self):

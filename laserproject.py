@@ -11,6 +11,7 @@ from text import text_to_svg_path
 from curvetopoints import quadratic_bezier
 import re
 
+MAX_POWER = 1000
 
 # Points contains a list of points and instructions on how those points should be
 # Such as if the points should be considered a fill, or a dotted line
@@ -385,11 +386,14 @@ class LaserObject:
 
                 shape_points.append([x, y])
 
-            process_points.append(shape_points)
+            # make a dict, result with points and fill
+            result = dict()
+            result["points"] = shape_points
+            result["fill"] = shape.fill
+
+            process_points.append(result)
 
         return process_points
-
-
 
 
     def get_path(self):
@@ -602,8 +606,9 @@ class LaserObject:
                         stop = (intersections[i + 1], y)
                         lines.append([start, stop])
 
-        # Add the lines to the shapes
-        self.shapes.extend(lines)
+        for line in lines:
+            points_object = Points(line, fill=True)
+            self.shapes.append(points_object)
 
         return
 
@@ -924,3 +929,20 @@ def convert_process_to_cartesian(points, max_y = 0):
 
     # They are now cartesian points, we need to convert them to process points
     return points
+
+
+def get_color_by_power(power):
+
+    # How much percentage of the power is used
+    percentage_power = power / MAX_POWER
+
+    # Then map that to a 128 value
+    parameter = int(128 * percentage_power)
+
+    # And reverse it, the lower, the darker
+    parameter = 255 - parameter
+
+    # And use it in the red colorspace
+    color = "#%02x%02x%02x" % (255, parameter, parameter)
+
+    return color

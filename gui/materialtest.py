@@ -213,8 +213,6 @@ class MaterialTest:
                     # That makes a nice "red" color, but I was going for black and white
                     color = "#%02x%02x%02x" % (parameter, parameter, parameter)
 
-                    print(color)
-
                     # Draw lines from the current point to the next, starting from the second iteration
                     if i > 0:
                         self.canvas.create_line(current_point[0], current_point[1],
