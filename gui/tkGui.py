@@ -349,7 +349,7 @@ class App(customtkinter.CTk):
         # Trial 2
         speed = 400
         power = 700
-        passes = 10
+        passes = 4
 
         l = 7
 

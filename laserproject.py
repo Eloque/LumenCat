@@ -225,6 +225,8 @@ class LaserProject:
                 start_gcode = shape_gcode.pop(0)
 
                 gcode.append("; Shape start")
+                gcode.append("; power mode")
+                gcode.append(self.laser_mode)
 
                 # We should iterate the passes here
                 for i in range(passes):
@@ -233,13 +235,9 @@ class LaserProject:
                     gcode.append("S0")
                     gcode.append(start_gcode)
 
-                    # Turn the laser on
-                    gcode.append("; Turn laser on")
-                    gcode.append("; constant power mode, but turned off")
-                    gcode.append(self.laser_mode)
-
                     # Set the speed and power
                     gcode.append("; Set speed and power")
+                    gcode.append("; Turn laser on")
                     gcode.append(speed)
                     gcode.append(power)
 
@@ -249,6 +247,9 @@ class LaserProject:
         # Add the footer
         gcode.append("; All done, turn laser off")
         gcode.append("M5")
+
+        gcode.append("; air assist off")
+        gcode.append("M9")
 
         # Got back home
         gcode.append("; Go back home")
@@ -399,7 +400,7 @@ class LaserObject:
 
             cartesian_points = list()
 
-            for point in shape:
+            for point in shape.points:
                 x = point[0] + self.location[0]
                 y = point[1] + self.location[1]
 
