@@ -127,8 +127,8 @@ class MaterialTest:
         y = 6 + 2
         x = 0
 
-        text_power = 20
-        text_speed = 600
+        text_power = 150
+        text_speed = 1500
 
         for speed in speed_values:
 

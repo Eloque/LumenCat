@@ -158,6 +158,9 @@ class LaserProject:
 
         shapes_as_cartesian_points = []
 
+        # Sort the laser_objects, by priority, highest priority first
+        self.laser_objects = sorted(self.laser_objects, key=lambda x: x.priority, reverse=True)
+
         # Go through the laser objects
         for laser_object in self.laser_objects:
 
@@ -362,6 +365,8 @@ class LaserObject:
         self.passes = passes
         self.path = None
         self.points = None
+
+        self.priority = 0
 
         self.shape_gcode = None
 
@@ -611,7 +616,7 @@ class LaserObject:
         # Initialize the list to store start and end coordinates of lines
         lines = []
 
-        step_size = 0.1
+        step_size = 0.25
 
         # Get all the points
         for shape in self.shapes:
@@ -649,6 +654,12 @@ class LaserObject:
                         start = (intersections[i], y)
                         stop = (intersections[i + 1], y)
                         lines.append([start, stop])
+
+        print(lines)
+        lines = greedy_draw(lines)
+
+        # Remove the old shapes
+        self.shapes = []
 
         for line in lines:
             points_object = Points(line, fill=True)
@@ -990,3 +1001,56 @@ def get_color_by_power(power):
     color = "#%02x%02x%02x" % (255, parameter, parameter)
 
     return color
+
+####
+from math import sqrt
+
+def distance(point1, point2):
+    """Calculate the Euclidean distance between two points."""
+    return sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+
+def find_closest_line_and_remove(current_position, remaining_lines):
+    """Find the line whose start point or end point is closest to the current position,
+    and then remove that line from the remaining lines list."""
+    closest_line_index = -1
+    closest_distance = float('inf')
+    start_point_closest = True  # Tracks whether the start point is closest
+
+    for i, line in enumerate(remaining_lines):
+        dist_to_start = distance(current_position, line[0])
+        dist_to_end = distance(current_position, line[1])
+
+        if dist_to_start < closest_distance:
+            closest_distance = dist_to_start
+            closest_line_index = i
+            start_point_closest = True
+
+        if dist_to_end < closest_distance:
+            closest_distance = dist_to_end
+            closest_line_index = i
+            start_point_closest = False
+
+    # Remove the closest line from the list and return it
+    closest_line = remaining_lines.pop(closest_line_index)
+
+    # If the end point was closer, we return the line reversed
+    if not start_point_closest:
+        closest_line = closest_line[::-1]
+
+    return closest_line
+
+def greedy_draw(lines):
+    """Draw lines using a greedy algorithm based on the closest start or end point."""
+    if not lines:
+        return []
+
+    remaining_lines = lines.copy()
+    path = [remaining_lines.pop(0)]  # Start with the first line
+    current_position = path[0][1]  # Initialize current position to the end of the first line
+
+    while remaining_lines:
+        next_line = find_closest_line_and_remove(current_position, remaining_lines)
+        path.append(next_line)
+        current_position = next_line[1]  # Move the pen to the end of the next line
+
+    return path

@@ -12,6 +12,7 @@ from laserproject import LaserProject, LaserObject, LaserTextObject
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
+import predefined
 from materialtest import MaterialTest
 
 class App(customtkinter.CTk):
@@ -66,11 +67,15 @@ class App(customtkinter.CTk):
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Bases", command=self.create_bases)
         self.sidebar_button_1.grid(row=6, column=0, padx=20, pady=10)
 
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Room", command=self.create_room)
+        self.sidebar_button_1.grid(row=7, column=0, padx=20, pady=10)
+
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame,
                                                                        values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
 
-        self.appearance_mode_optionemenu.grid(row=7, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 10))
         self.scaling_label = customtkinter.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
 
         self.control_bar = customtkinter.CTkFrame(self, width=140, corner_radius=0)
@@ -347,9 +352,9 @@ class App(customtkinter.CTk):
         passes = 4
 
         # Trial 2
-        speed = 400
-        power = 700
-        passes = 4
+        speed = 100
+        power = 800
+        passes = 6
 
         l = 7
 
@@ -385,6 +390,10 @@ class App(customtkinter.CTk):
         power = 700
         passes = 20
 
+        speed = 100
+        power = 850
+        passes = 8
+
         # Add 6cm x 6cm square
         laser_object = LaserObject(speed, power, passes)
         laser_object.location = (0, 0)
@@ -399,7 +408,7 @@ class App(customtkinter.CTk):
 
         self.laser_project.laser_objects.append(laser_object)
 
-        laser_object = LaserTextObject("5cm x 5cm\nBoven", "../Ubuntu-R.ttf", 20, 600, 250, 1)
+        laser_object = LaserTextObject("5cm x 5cm", "../Ubuntu-R.ttf", 20, 600, 250, 1)
         laser_object.location = (5, 15)
 
         self.laser_project.laser_objects.append(laser_object)
@@ -614,14 +623,14 @@ class App(customtkinter.CTk):
         self.laser_project = LaserProject()
 
         # Create a settings list, items of speed, power, passes
-        min_power = 400
-        max_power = 1000
+        min_power = 600
+        max_power = 600
 
-        min_speed = 200
-        max_speed = 1200
+        min_speed = 400
+        max_speed = 400
 
         min_passes = 1
-        max_passes = 2
+        max_passes = 1
 
         power_step = 200
         speed_step = 200
@@ -639,7 +648,7 @@ class App(customtkinter.CTk):
             p += 1
             n = 0
             for speed in range(min_speed, max_speed + speed_step, speed_step):
-                laser_objects = self.laser_project.small_material_test(speed, power, 4)
+                laser_objects = self.laser_project.small_material_test(speed, power, max_passes)
 
                 laser_objects[0].translate(20 * (p - 1), n * 20)
                 laser_objects[1].translate(20 * (p - 1), n * 20)
@@ -672,22 +681,26 @@ class App(customtkinter.CTk):
 
         self.laser_project = LaserProject()
 
-        speed = 160
-        power = 1000
-        passes = 4
+        speed = 100
+        power = 850
+        passes = 2
 
         # Add a 50mm base
         laser_object = LaserObject(speed, power, passes)
-        laser_object.location = (5, 5)
+        laser_object.location = (0, 0)
 
-        x = 25
-        y = 25
+        x = 50
+        y = 50
 
-        for i in range(0, 3):
-            laser_object.add_circle(x, y, 25)
-            laser_object.add_circle(x, y + 55, 25)
+        # laser_object.add_circle(x, y, 50)
 
-            x += 55
+        laser_object.add_rounded_rectangle(50,50,103,103,5)
+
+        # for i in range(0, 3):
+        #     laser_object.add_circle(x, y, 25)
+        #     laser_object.add_circle(x, y + 55, 25)
+        #
+        #     x += 55
 
         # laser_object.add_rounded_rectangle(80, 50+2.5, 160+10, 105+10, 5)
 
@@ -737,6 +750,15 @@ class App(customtkinter.CTk):
                     self.current_selected_object = box
 
                     break
+
+    def create_room(self):
+
+        points = [[4, 1], [3, 1], [3, 0], [0, 0], [0, 3], [3, 3], [3, 2], [4, 2]]
+
+        points = [[2,4],[3,4],[3,0],[0,0],[0,4],[1,4],[1,5]]
+
+        self.laser_project = predefined.base_room(points)
+        self.draw_all_elements()
 
     def material_test(self):
 
