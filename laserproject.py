@@ -31,7 +31,7 @@ class LaserProject:
         self.gcode = None
         self.gcode_header = None
 
-        self.laser_mode = "M3" # M3 is constant power mode, M4 is PWM mode
+        # self.laser_mode = "M3" # M3 is constant power mode, M4 is PWM mode
 
     # Helper function, get a string representation of the SVG
     @staticmethod
@@ -68,7 +68,7 @@ class LaserProject:
                     color = get_color_by_power(laser_object.power) if shape["fill"] else "black"
 
                     line = canvas.create_line(current_point[0], current_point[1],
-                                              point[0], point[1], fill=color, width=1)
+                                              point[0], point[1], fill=color, width=3)
 
                     # add a tag to the line
                     canvas.addtag_withtag("laser_object", line)
@@ -167,11 +167,13 @@ class LaserProject:
             speed = laser_object.speed
             power = laser_object.power
             passes = laser_object.passes
+            power_mode = laser_object.power_mode
 
             point_lists = laser_object.get_cartesian_points_as_lists()
             shapes_as_cartesian_points.append({"speed": speed,
                                                "power": power,
                                                "passes": passes,
+                                               "power_mode": power_mode,
                                                "point_lists": point_lists})
 
         return shapes_as_cartesian_points
@@ -229,7 +231,7 @@ class LaserProject:
 
                 gcode.append("; Shape start")
                 gcode.append("; power mode")
-                gcode.append(self.laser_mode)
+                gcode.append(shape["power_mode"])
 
                 # We should iterate the passes here
                 for i in range(passes):
@@ -369,6 +371,7 @@ class LaserObject:
         self.priority = 0
 
         self.shape_gcode = None
+        self.power_mode = "M3"
 
         # These are a list of points, that are in cartesian coordinates
         # All other data is derived from this
@@ -617,6 +620,7 @@ class LaserObject:
         lines = []
 
         step_size = 0.25
+        # step_size = 0.1
 
         # Get all the points
         for shape in self.shapes:
@@ -655,7 +659,6 @@ class LaserObject:
                         stop = (intersections[i + 1], y)
                         lines.append([start, stop])
 
-        print(lines)
         lines = greedy_draw(lines)
 
         # Remove the old shapes

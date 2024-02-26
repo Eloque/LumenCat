@@ -27,7 +27,7 @@ class App(customtkinter.CTk):
 
         # configure window
         self.title("LumenCat")
-        self.geometry(f"{1200}x{800}")
+        self.geometry(f"{1500}x{1200}")
 
         # configure grid layout (3x2)
         self.grid_columnconfigure(1, weight=1)
@@ -68,14 +68,18 @@ class App(customtkinter.CTk):
         self.sidebar_button_1.grid(row=6, column=0, padx=20, pady=10)
 
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Room", command=self.create_room)
         self.sidebar_button_1.grid(row=7, column=0, padx=20, pady=10)
+
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Foldable", command=self.create_foldable_box)
+        self.sidebar_button_1.grid(row=8, column=0, padx=20, pady=10)
 
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame,
                                                                        values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
 
-        self.appearance_mode_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_optionemenu.grid(row=18, column=0, padx=20, pady=(10, 10))
         self.scaling_label = customtkinter.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
 
         self.control_bar = customtkinter.CTkFrame(self, width=140, corner_radius=0)
@@ -143,9 +147,8 @@ class App(customtkinter.CTk):
         self.button_load_test.grid(row=7, column=0, padx=20, pady=10, columnspan=2)
 
 
-
         # create main canvas frame
-        self.main_frame = CTkXYFrame(self, width=600, height=600, corner_radius=0)
+        self.main_frame = CTkXYFrame(self, width=600, height=950, corner_radius=0)
         # self.main_frame = CTkXYFrame(self, width=600, height=600, corner_radius=0)
         self.main_frame.grid(row=0, column=1, padx=20, pady=10, sticky="nsew")
 
@@ -755,9 +758,18 @@ class App(customtkinter.CTk):
 
         points = [[4, 1], [3, 1], [3, 0], [0, 0], [0, 3], [3, 3], [3, 2], [4, 2]]
 
-        points = [[2,4],[3,4],[3,0],[0,0],[0,4],[1,4],[1,5]]
+        #points = [[2,4],[3,4],[3,0],[0,0],[0,4],[1,4],[1,5]]
+        #points = [[0, 0], [0, 4], [1, 4], [1, 5]]
 
-        self.laser_project = predefined.base_room(points)
+        # self.laser_project = predefined.base_room(points)
+
+        self.laser_project = predefined.half_way()
+
+        self.draw_all_elements()
+
+    def create_foldable_box(self):
+
+        self.laser_project = predefined.foldable()
         self.draw_all_elements()
 
     def material_test(self):
