@@ -130,12 +130,15 @@ class MaterialTest:
         text_power = 150
         text_speed = 1500
 
+        # Rectangle size
+        rectangle_size = 5
+
         for speed in speed_values:
 
             laser_object = LaserTextObject(speed, "../fonts/Ubuntu-R.ttf", 8, text_speed, text_power, 1)
             laser_object.location = (x, y)
             self.laser_project.laser_objects.append(laser_object)
-            y += 12
+            y += ( rectangle_size + 2 )
 
         y = 0
         x = 12 - 1
@@ -143,7 +146,7 @@ class MaterialTest:
             laser_object = LaserTextObject(power, "../fonts/Ubuntu-R.ttf", 8, text_speed, text_power, 1)
             laser_object.location = (x, y)
             self.laser_project.laser_objects.append(laser_object)
-            x += 12
+            x += (rectangle_size + 2)
 
         x = 8
         y = 4
@@ -153,15 +156,15 @@ class MaterialTest:
 
             for power in power_values:
                 laser_object = LaserObject(speed, power*10, 1)
-                laser_object.add_rectangle(x, y, 10, 10)
+                laser_object.add_rectangle(x, y, rectangle_size, rectangle_size)
                 laser_object.fill()
 
                 self.laser_project.laser_objects.append(laser_object)
 
-                x += 12
+                x += (rectangle_size + 2)
 
             x = 8
-            y += 12
+            y += (rectangle_size + 2)
 
         self.draw_all_elements()
 

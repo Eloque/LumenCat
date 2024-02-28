@@ -28,3 +28,4 @@ tk
 ttkthemes
 urllib3
 wxPython
+shapely
