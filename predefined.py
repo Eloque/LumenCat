@@ -219,26 +219,27 @@ def half_way():
 
     laserObject.add_polygon(points_right)
     laserObject.add_polygon(points_left)
+    laserObject.add_polygon(polygon_points)
 
-    ##
     # Create a polygon from the scaled points
     original_polygon = Polygon(polygon_points)
     buffer_distance = 5
     buffered_polygon = original_polygon.buffer(buffer_distance, join_style=2)
-
     buffered_polygon_coords = list(buffered_polygon.exterior.coords)
-
-    # laserObject.add_polygon(polygon_points)
 
     # Draw around the original polygon
     outline = Polygon(polygon_points).buffer(10, join_style=2)
     outline_coords = list(outline.exterior.coords)
 
-    #laserObject.add_polygon(buffered_polygon_coords)
+    laserObject.add_polygon(original_polygon.exterior.coords)
+    buffer_distance = 5
+    buffered_polygon = original_polygon.buffer(buffer_distance, join_style=2)
+    buffered_polygon_coords = list(buffered_polygon.exterior.coords)
+
+    laserObject.add_polygon(buffered_polygon_coords)
 
     # Now this buffer contains 2 edges that were added to close the polygon
     # Remove those edges
-
 
     # laserObject.add_polygon(outline_coords)
     print(buffered_polygon_coords)
@@ -246,6 +247,15 @@ def half_way():
     # buffered_polygon_coords.pop()
 
     print(buffered_polygon_coords)
+    # laserObject.add_polygon(buffered_polygon_coords.copy())
+    # move all buffered_polygon_coords 150 px up and to the right
+    buffered_polygon_coords = [[50,50],[100,50],[150,50],[50,40]] # [[x + 2150, y + 2150] for x, y in buffered_polygon_coords]
+
+    laserObject.add_polygon(buffered_polygon_coords)
+
+    laserProject.laser_objects.append(laserObject)
+
+    return laserProject
 
     # And split the polygon into two, right down the middle
     # Got trough each point in points_left, find the closest point in buffered_polygon_coords
@@ -265,6 +275,8 @@ def half_way():
         right_half.append(closest_point)
         buffered_polygon_coords.remove(closest_point)
 
+    #laserObject.add_polygon(left_half)
+    #laserObject.add_polygon(right_half)
 
     # And create LineString for both
     line = LineString(left_half)
@@ -276,7 +288,7 @@ def half_way():
     left_laserObject.fill()
     left_laserObject.location = (offset, offset)
     left_laserObject.power_mode = "M4"
-    laserProject.laser_objects.append(left_laserObject)
+#    laserProject.laser_objects.append(left_laserObject)
 
     # And the second half
     line = LineString(right_half)
@@ -288,7 +300,7 @@ def half_way():
     right_laserObject.fill()
     right_laserObject.location = (offset, offset)
     left_laserObject.power_mode = "M4"
-    laserProject.laser_objects.append(right_laserObject)
+ #   laserProject.laser_objects.append(right_laserObject)
 
     laserProject.laser_objects.append(laserObject)
 
@@ -313,3 +325,25 @@ def foldable():
 
     return laserproject
 
+def aoe():
+
+    # Create an area of effect ring
+    laserproject = LaserProject()
+
+    n = 2
+
+    laserobject = LaserObject(600, 400, 4)
+    laserobject.add_circle(n*25, n*25, n*25)
+    laserobject.add_circle(n*25, n*25, n*25+5)
+    laserobject.location = (25, 25)
+
+    text = LaserTextObject("20' radius", "../Ubuntu-R.ttf", 12, 300, 2500, passes=1)
+    # text.location =(n*25,n*25)
+
+    # increase text location by 25
+    # text.location = (text.location[0] + 25, text.location[1] + 25)
+
+    laserproject.laser_objects.append(text)
+    laserproject.laser_objects.append(laserobject)
+
+    return laserproject

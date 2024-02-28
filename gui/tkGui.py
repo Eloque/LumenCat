@@ -75,6 +75,9 @@ class App(customtkinter.CTk):
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Foldable", command=self.create_foldable_box)
         self.sidebar_button_1.grid(row=8, column=0, padx=20, pady=10)
 
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Curved text", command=self.creat_aoe)
+        self.sidebar_button_1.grid(row=9, column=0, padx=20, pady=10)
+
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame,
                                                                        values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
@@ -692,12 +695,18 @@ class App(customtkinter.CTk):
         laser_object = LaserObject(speed, power, passes)
         laser_object.location = (0, 0)
 
-        x = 50
-        y = 50
+        x = 25
+        y = 25
 
-        # laser_object.add_circle(x, y, 50)
+        laser_object.add_circle(x+5, y+5, 25)
+        laser_object.add_circle(x+50+5+5, y+5, 25)
 
-        laser_object.add_rounded_rectangle(50,50,103,103,5)
+        laser_object.priority = 10
+
+        cutout = LaserObject(speed, power, passes)
+        cutout.add_rounded_rectangle(50+5+2.5,25+5,100+15,50+10,5)
+
+        self.laser_project.laser_objects.append(cutout)
 
         # for i in range(0, 3):
         #     laser_object.add_circle(x, y, 25)
@@ -776,6 +785,11 @@ class App(customtkinter.CTk):
 
         material_test = MaterialTest(self)
         material_test.show()
+
+    def creat_aoe(self):
+
+        self.laser_project = predefined.aoe()
+        self.draw_all_elements()
 
 
 if __name__ == "__main__":

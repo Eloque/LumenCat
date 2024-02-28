@@ -6,6 +6,7 @@ import datetime
 import xml.etree.ElementTree as elementTree
 
 import numpy as np
+from shapely import unary_union
 
 from text import text_to_svg_path
 from curvetopoints import quadratic_bezier
@@ -683,26 +684,6 @@ class LaserTextObject(LaserObject):
         # Call the parent constructor
         super().__init__(speed, power, passes)
 
-    # Override the get_shape_as_points method
-    # This will represent the text as a list of points, but accounting for the fact
-    # that a text object has multiple letters
-    def get_shape_as_points(self):
-
-        # probably not need
-        raise NotImplementedError
-
-        # Convert the text to a list of SVG paths
-        letter_paths = text_to_svg_path(self.text, self.font, self.font_size)
-
-        for letter_path in letter_paths:
-            print(letter_path)
-
-            # Convert that path to points
-            letter_points = convert_path_to_points(letter_path)
-
-            return letter_points
-
-
     # This is the laser TextObject of the function
     def get_cartesian_points_as_lists(self):
 
@@ -818,9 +799,34 @@ class LaserTextObject(LaserObject):
         # Create a laserobject to give all these polygons to!
         laser_object = LaserObject(self.speed, self.power, self.passes)
 
+        center = (75, 75)  # Circle center
+        radius = 52.5  # Circle radius
+
+        # Now convert these polygons to a circle thing
+        # circle_polygons = distribute_polygons_around_circle(polygons, center,radius)
+
+        polygon_groups = list()
         for letter in polygons:
+            group = list()
+
+            for polygon in letter:
+                group.append(Polygon(polygon))
+
+            polygon_groups.append(group)
+
+        #circle_polygons = distribute_groups_around_circle(polygon_groups, center, radius)
+        circle_polygons = curve_polygons_around_circle(polygon_groups, center, radius)
+        #circle_polygons = curve_groups_around_circle(polygon_groups, center, radius)
+
+        # At this point, I have all the letters, as individual polygons.
+        for letter in polygons:
+
             for polygon in letter:
                 laser_object.add_polygon(polygon)
+
+        for group in circle_polygons:
+            for polygon in group:
+                laser_object.add_polygon(polygon.exterior.coords)
 
         laser_object.location = self.location
 
@@ -1057,3 +1063,155 @@ def greedy_draw(lines):
         current_position = next_line[1]  # Move the pen to the end of the next line
 
     return path
+
+
+from shapely.geometry import Polygon
+from shapely.affinity import translate, rotate
+import math
+
+
+def distribute_polygons_around_circle(polygons, center, radius):
+    # Number of polygons
+    n = len(polygons)
+
+    # Calculate the angle between each polygon (in radians)
+    angle_between_polygons = 2 * math.pi / n
+
+    # List to hold the transformed polygons
+    transformed_polygons = []
+
+    for i, polygon in enumerate(polygons):
+        # Calculate the angle for the current polygon
+        angle = angle_between_polygons * i
+
+        # Calculate the new position for the polygon's centroid
+        new_x = center[0] + radius * math.cos(angle)
+        new_y = center[1] + radius * math.sin(angle)
+
+        # Calculate the translation required
+        centroid = polygon.centroid
+        translation_x = new_x - centroid.x
+        translation_y = new_y - centroid.y
+
+        # Apply the translation
+        transformed_polygon = translate(polygon, translation_x, translation_y)
+
+        # Add the transformed polygon to the list
+        transformed_polygons.append(transformed_polygon)
+
+    return transformed_polygons
+
+
+def distribute_groups_around_circle(groups, center, radius):
+    n = len(groups)  # Number of groups
+
+    angle_between_groups = 2 * math.pi / n  # Angle between each group
+
+    transformed_groups = []  # To hold the transformed groups
+
+    for i, group in enumerate(groups):
+        # Calculate the central point of the group
+        group_union = unary_union(group)  # Merge all polygons to calculate a common centroid
+        group_centroid = group_union.centroid
+
+        # Calculate the new position for the group's centroid
+        angle = angle_between_groups * i
+        new_x = center[0] + radius * math.cos(angle)
+        new_y = center[1] + radius * math.sin(angle)
+
+        # Calculate translation required
+        translation_x = new_x - group_centroid.x
+        translation_y = new_y - group_centroid.y
+
+        # Translate each polygon in the group
+        transformed_group = [translate(poly, translation_x, translation_y) for poly in group]
+
+        transformed_groups.append(transformed_group)
+
+    return transformed_groups
+
+
+def curve_polygons_around_circle(groups, center, radius):
+    n = len(groups)  # Number of groups
+
+    angle_between_groups = 30 / n # Angle between each group in degrees
+    start_angle = 270
+    curved_groups = []  # To hold the curved groups
+
+    for i, group in enumerate(groups):
+        # Calculate the central point of the group using unary_union
+        group_union = unary_union(group)
+        group_centroid = group_union.centroid
+
+        # Calculate the new position for the group's centroid along the circle
+        angle_degrees = 360 - (angle_between_groups * i)
+        angle_degrees = (360 - start_angle) - (angle_between_groups * i)# - (60 - angle_between_groups)
+
+        angle_radians = math.radians(angle_degrees)
+        new_x = center[0] + radius * math.cos(angle_radians)
+        new_y = center[1] + radius * math.sin(angle_radians)
+
+        # Calculate translation required to move the group's centroid to the new position
+        translation_x = new_x - group_centroid.x
+        translation_y = new_y - group_centroid.y
+
+        # Rotate the group to face towards the center of the circle
+        # The rotation angle is adjusted to orient the bottom of the polygons towards the center
+        rotation_angle = -angle_degrees + 90  # Adjust rotation so "bottom" faces towards circle center
+
+        rotation_angle = angle_degrees - 90
+
+        # Apply translation and rotation to each polygon in the group
+        curved_group = [rotate(translate(poly, translation_x, translation_y), rotation_angle, origin=(new_x, new_y)) for
+                        poly in group]
+
+        curved_groups.append(curved_group)
+
+    return curved_groups
+
+
+def curve_group_around_circle(group, center, radius, start_angle):
+    curved_group = []
+    angle_offset = start_angle
+
+    for polygon in group:
+        # Measure the "width" of the polygon
+        width = polygon.bounds[2] - polygon.bounds[0]  # max_x - min_x
+        angular_width = math.degrees(width / radius)  # Convert arc length to angular width
+
+        # Calculate the midpoint angle for the polygon
+        midpoint_angle = angle_offset + angular_width / 2
+
+        # Calculate the new position
+        x = center[0] + radius * math.cos(math.radians(midpoint_angle))
+        y = center[1] + radius * math.sin(math.radians(midpoint_angle))
+
+        # Calculate translation
+        centroid = polygon.centroid
+        translation_x = x - centroid.x
+        translation_y = y - centroid.y
+
+        # Translate and rotate the polygon
+        transformed_polygon = translate(polygon, translation_x, translation_y)
+        transformed_polygon = rotate(transformed_polygon, midpoint_angle + 90, origin=(x, y))
+
+        curved_group.append(transformed_polygon)
+
+        # Update angle offset for the next polygon
+        angle_offset += angular_width
+
+    return curved_group
+
+
+def curve_groups_around_circle(groups, center, radius):
+    all_curved_groups = []
+    start_angle = 0
+
+    for group in groups:
+        curved_group = curve_group_around_circle(group, center, radius, start_angle)
+        all_curved_groups.extend(curved_group)
+
+        # Optionally, update start_angle here if you want spacing between groups
+        # For example, you could add the total angular width of the group to start_angle
+
+    return all_curved_groups
