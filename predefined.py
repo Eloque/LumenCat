@@ -330,18 +330,19 @@ def aoe():
     # Create an area of effect ring
     laserproject = LaserProject()
 
-    n = 2
+    n = 0.75
 
-    laserobject = LaserObject(600, 400, 4)
-    laserobject.add_circle(n*25, n*25, n*25)
-    laserobject.add_circle(n*25, n*25, n*25+5)
-    laserobject.location = (25, 25)
+    laserobject = LaserObject(400, 500, 2)
+    laserobject.add_circle(n*25, n*25, 18.5/2)
+    laserobject.add_circle(n*25, n*25, 18.5/2 + 4)
+    laserobject.location = (0, 0)
 
-    text = LaserTextObject("20' radius", "../Ubuntu-R.ttf", 12, 300, 2500, passes=1)
+    text = LaserTextObject("Stunned", "../Ubuntu-R.ttf", 9, 2500, 300, passes=1)
     # text.location =(n*25,n*25)
-
     # increase text location by 25
     # text.location = (text.location[0] + 25, text.location[1] + 25)
+
+    text.fill()
 
     laserproject.laser_objects.append(text)
     laserproject.laser_objects.append(laserobject)

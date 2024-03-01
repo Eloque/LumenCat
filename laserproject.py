@@ -750,6 +750,57 @@ class LaserTextObject(LaserObject):
     # And finally those process points are converted to cartesian points
     def get_process_points(self):
 
+        # Convert to a regular laser object
+        laser_object = self.convert_to_laser_object()
+
+        # Return the process points
+        return laser_object.get_process_points()
+
+    def curve_points(self):
+
+        center = (0.75*25, 0.75*25)  # Circle center
+        radius = 26   # Circle radius
+        radius = 18.5 / 2 + 1
+
+        # Now convert these polygons to a circle thing
+        # circle_polygons = distribute_polygons_around_circle(polygons, center,radius)
+
+        polygon_groups = list()
+        for letter in polygons:
+            group = list()
+
+            for polygon in letter:
+                group.append(Polygon(polygon))
+
+            polygon_groups.append(group)
+
+        #circle_polygons = distribute_groups_around_circle(polygon_groups, center, radius)
+        circle_polygons = curve_polygons_around_circle(polygon_groups, center, radius)
+        #circle_polygons = curve_groups_around_circle(polygon_groups, center, radius)
+
+        # laser_object.add_circle(75, 75, radius)
+
+        # At this point, I have all the letters, as individual polygons.
+        for letter in polygons:
+            for polygon in letter:
+                pass
+                laser_object.add_polygon(polygon)
+
+        for group in circle_polygons:
+            for polygon in group:
+                laser_object.add_polygon(polygon.exterior.coords)
+
+        laser_object.location = self.location
+
+        self.alt_laser_object = laser_object
+
+        # Get the points
+        return laser_object.get_process_points()
+
+    ##
+
+    def convert_to_laser_object(self):
+
         # Convert the text to a list of SVG paths
         letter_paths = text_to_svg_path(self.text, self.font, self.font_size)
 
@@ -799,39 +850,13 @@ class LaserTextObject(LaserObject):
         # Create a laserobject to give all these polygons to!
         laser_object = LaserObject(self.speed, self.power, self.passes)
 
-        center = (75, 75)  # Circle center
-        radius = 52.5  # Circle radius
-
-        # Now convert these polygons to a circle thing
-        # circle_polygons = distribute_polygons_around_circle(polygons, center,radius)
-
-        polygon_groups = list()
-        for letter in polygons:
-            group = list()
-
-            for polygon in letter:
-                group.append(Polygon(polygon))
-
-            polygon_groups.append(group)
-
-        #circle_polygons = distribute_groups_around_circle(polygon_groups, center, radius)
-        circle_polygons = curve_polygons_around_circle(polygon_groups, center, radius)
-        #circle_polygons = curve_groups_around_circle(polygon_groups, center, radius)
-
         # At this point, I have all the letters, as individual polygons.
         for letter in polygons:
-
             for polygon in letter:
+                pass
                 laser_object.add_polygon(polygon)
 
-        for group in circle_polygons:
-            for polygon in group:
-                laser_object.add_polygon(polygon.exterior.coords)
-
-        laser_object.location = self.location
-
-        # Get the points
-        return laser_object.get_process_points()
+        return laser_object
 
 
     def get_svg_element(self):
@@ -950,6 +975,16 @@ def convert_path_to_points(path):
             points = []
 
     return return_list
+
+    # def convert_to_laser_object(self):
+    #
+    #     # Create a LaserObject
+    #     laser_object = LaserObject()
+    #
+    #     # Add the points to the laser object
+    #
+    #
+    #     return laser_object
 
 # function to convert SVG path to GCode
 def convert_points_to_gcode(points):
@@ -1131,44 +1166,103 @@ def distribute_groups_around_circle(groups, center, radius):
     return transformed_groups
 
 
-def curve_polygons_around_circle(groups, center, radius):
-    n = len(groups)  # Number of groups
+def curve_polygons_around_circle(groups, center, radius, start_angle=90):
+    n = sum(len(group) for group in groups)  # Total number of polygons across all groups
+    n = len(groups) # Total number of polygons across all groups
 
-    angle_between_groups = 30 / n # Angle between each group in degrees
-    start_angle = 270
-    curved_groups = []  # To hold the curved groups
+    # Total angle covered by the text, keeping it within 60 degrees
+    total_angle_covered = 360
+    # Calculate the angle each polygon should cover, assuming equal width for simplicity
+    angle_per_polygon = total_angle_covered / n
 
-    for i, group in enumerate(groups):
-        # Calculate the central point of the group using unary_union
-        group_union = unary_union(group)
-        group_centroid = group_union.centroid
+    # Initialize the current angle from the starting position
+    current_angle = start_angle
+    curved_groups = []
 
-        # Calculate the new position for the group's centroid along the circle
-        angle_degrees = 360 - (angle_between_groups * i)
-        angle_degrees = (360 - start_angle) - (angle_between_groups * i)# - (60 - angle_between_groups)
+    # Get the circumference of the circle
+    circumference = 2 * math.pi * radius
 
+    # Get the degrees per unit of circumference
+    degrees_per_unit = total_angle_covered / circumference
+
+    # Cursor X
+    x_cursor = 0
+
+    for group in groups:
+
+        max_x = 0
+        min_x = float('inf')
+        curved_group = []
+        max_width = 0
+        min_y = float('inf')
+
+        for poly in group:
+            # Calculate the width of the polygon
+            width = poly.bounds[2] - poly.bounds[0]
+
+            # Get the min y as well
+            if poly.bounds[1] < min_y:
+                min_y = poly.bounds[1]
+
+            # Get the max x as well
+            if poly.bounds[2] > max_x:
+                max_x = poly.bounds[2]
+
+            if poly.bounds[0] < min_x:
+                min_x = poly.bounds[0]
+
+            if width > max_width:
+                max_width = width
+
+        print(min_y)
+        # Update the cursor, by increasing it by the distance of the difference
+        # between this and the previous polygon
+
+        # Get the difference between the cursor and the min_x
+        spacing = min_x - x_cursor
+
+        # Get the movement
+        movement = spacing + degrees_per_unit
+
+        # Move the current angle
+        current_angle -= movement
+
+        # Update the cursor
+        x_cursor = max_x
+
+        # We now have the maximum width, we can calculate the angles needed
+        angles_needed = max_width * degrees_per_unit
+        current_angle -= angles_needed  # Move clockwise by subtracting angle
+
+        # Calculate the midpoint angle for this polygon's position
+        angle_degrees = current_angle
+        # Convert angle to radians for math operations
         angle_radians = math.radians(angle_degrees)
+
+        # Calculate the new position along the circle
         new_x = center[0] + radius * math.cos(angle_radians)
         new_y = center[1] + radius * math.sin(angle_radians)
 
-        # Calculate translation required to move the group's centroid to the new position
-        translation_x = new_x - group_centroid.x
-        translation_y = new_y - group_centroid.y
+        # Determine rotation for the polygon: it should be perpendicular to the radius
+        rotation_angle = angle_degrees - 90  # This aligns the bottom of the polygon towards the circle's center
 
-        # Rotate the group to face towards the center of the circle
-        # The rotation angle is adjusted to orient the bottom of the polygons towards the center
-        rotation_angle = -angle_degrees + 90  # Adjust rotation so "bottom" faces towards circle center
+        translation_x = new_x - group[0].centroid.x
+        translation_y = new_y
 
-        rotation_angle = angle_degrees - 90
+        for poly in group:
 
-        # Apply translation and rotation to each polygon in the group
-        curved_group = [rotate(translate(poly, translation_x, translation_y), rotation_angle, origin=(new_x, new_y)) for
-                        poly in group]
+            # Apply translation and then rotation
+            transformed_poly = translate(poly, translation_x, translation_y)
+            transformed_poly = rotate(transformed_poly, rotation_angle, origin=(new_x, new_y))
+
+            curved_group.append(transformed_poly)
+
+            # Update current_angle for the next polygon
+        # current_angle -= angle_per_polygon  # Move clockwise by subtracting angle
 
         curved_groups.append(curved_group)
 
     return curved_groups
-
 
 def curve_group_around_circle(group, center, radius, start_angle):
     curved_group = []

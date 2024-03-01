@@ -791,6 +791,13 @@ class App(customtkinter.CTk):
         self.laser_project = predefined.aoe()
         self.draw_all_elements()
 
+        # now create a new laser project, dirty dirty dirty hack
+        #laser_project = LaserProject()
+        #laser_project.laser_objects.append(self.laser_project.laser_objects[0].alt_laser_object)
+        #laser_project.laser_objects.append(self.laser_project.laser_objects[1])
+
+       # self.laser_project = laser_project
+        self.draw_all_elements()
 
 if __name__ == "__main__":
     app = App()
