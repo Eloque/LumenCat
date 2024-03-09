@@ -32,6 +32,7 @@ class LaserProject:
         self.gcode = None
         self.gcode_header = None
 
+        self.location = (0, 0)
         # self.laser_mode = "M3" # M3 is constant power mode, M4 is PWM mode
 
     # Helper function, get a string representation of the SVG
@@ -54,6 +55,11 @@ class LaserProject:
         # Go through the laser objects
         for laser_object in self.laser_objects:
 
+            original_location = laser_object.location
+
+            # Update the laser_object location to take in mind the location of the project
+            laser_object.location = (laser_object.location[0] + self.location[0], laser_object.location[1] + self.location[1])
+
             # Get the points for the object
             object_points = laser_object.get_process_points()
 
@@ -66,7 +72,7 @@ class LaserProject:
 
                 for point in shape["points"]:
 
-                    color = get_color_by_power(laser_object.power) if shape["fill"] else "black"
+                    color = get_color_by_power(laser_object.power) if shape["fill"] else laser_object.color
 
                     line = canvas.create_line(current_point[0], current_point[1],
                                               point[0], point[1], fill=color, width=3)
@@ -88,6 +94,9 @@ class LaserProject:
 
             # Set the bounding box
             laser_object.bounding_box = (min_x, min_y, max_x, max_y)
+
+            # And set the location back to what it was.
+            laser_object.location = original_location
 
         return
 
@@ -374,6 +383,8 @@ class LaserObject:
         self.shape_gcode = None
         self.power_mode = "M3"
 
+        self.color = "black"
+
         # These are a list of points, that are in cartesian coordinates
         # All other data is derived from this
         # An object can have multiple points lists
@@ -621,6 +632,7 @@ class LaserObject:
         lines = []
 
         step_size = 0.25
+        step_size = 0.085
         # step_size = 0.1
 
         # Get all the points
@@ -849,6 +861,7 @@ class LaserTextObject(LaserObject):
 
         # Create a laserobject to give all these polygons to!
         laser_object = LaserObject(self.speed, self.power, self.passes)
+        laser_object.location = self.location
 
         # At this point, I have all the letters, as individual polygons.
         for letter in polygons:
@@ -864,6 +877,159 @@ class LaserTextObject(LaserObject):
         letter_paths = text_to_svg_path(self.text, self.font, self.font_size)
         return letter_paths
 
+class LaserImageObject(LaserObject):
+
+    def __init__(self, speed, power, passes):
+
+        # Call the parent constructor
+        super().__init__(speed, power, passes)
+
+    # Open a file
+    def convert_file(self, filename):
+
+        self.filename = filename
+
+        # The file is a png, we need to convert it to a list of points
+        # We will use the PIL library to do this
+        from PIL import Image
+
+        # Open the image, as grayscale
+        image = Image.open(filename).convert('L')
+
+        # So we have the DPI, and the size of the image
+        # Assume it's even accross
+        dpi = image.info['dpi'][0]
+
+        # The machine is in mm, so we need to convert the DPI to mm
+        # 1 inch = 25.4 mm
+        pixels_per_mm = dpi / 25.4
+
+        # The S9 is approximately 318 dpi
+        s9_pixels_per_mm = 318 / 25.4
+
+        image_data = np.array(image)
+
+        horizontal_lines = [row.tolist() for row in image_data]
+
+        picture_lines = []
+
+        # pixels_per_mm = 6.5
+        step_size = 1 / pixels_per_mm
+            # step_size = 1
+
+        # invert the horizontal lines
+        horizontal_lines = horizontal_lines[::-1]
+
+        scan_lines = []
+
+
+        # Go through the horizontal lines
+        y = 0
+        for line in horizontal_lines:
+
+            picture_lines = []
+
+            x = 0
+            start_x = 0
+
+            current_color = line[0]
+
+            for pixel in line:
+                # is this pixel the same color as the last one?
+                if pixel == current_color:
+                    pass
+                    # the line continues
+                else:
+                    # the line ends
+                    # draw from start_x to x
+                    picture_lines.append((start_x, y, x, y, current_color))
+                    current_color = pixel
+                    start_x = x
+
+                x += step_size
+
+            # Close the line
+            picture_lines.append((start_x, y, x, y, current_color))
+            y += step_size
+
+            scan_lines.append(picture_lines)
+
+        picture_lines = []
+
+        # Go through the scan lines, check the Y values
+        for index, picture_line in enumerate(scan_lines):
+
+            if index % 2 == 0:
+                # The lines needs reversing to have back/forth scan lines
+                lines = picture_line[::-1]
+
+                reversed_lines = []
+
+                for line in lines:
+
+                    reversed_line = (line[2], line[1], line[0], line[3], line[4])
+                    reversed_lines.append(reversed_line)
+
+                lines = reversed_lines
+
+            else:
+
+                lines = picture_line
+
+            for line in lines:
+                picture_lines.append(line)
+
+        # We have list of picture lines, take out all that have color = 255, ie white
+        picture_lines = [line for line in picture_lines if line[4] != 255]
+
+        # Now scale all the items by a factor 0.1
+        #picture_lines = [(line[0]*0.1, line[1]*0.1, line[2]*0.1, line[3]*0.1, line[4]) for line in picture_lines]
+
+        # Now each line starts at left, and ends at right
+        # For every new y coordinate, we need to reverse the order of the lines
+
+        laser_objects = list()
+
+        # Now we have the picture lines, we can convert them to points
+        for line in picture_lines:
+            points = [(line[0], line[1]), (line[2], line[3])]
+            # On a scale of
+
+            # lo = LaserObject(2500, convert_color_to_power(line[4],300), 1)
+            lo = LaserObject(3000, convert_color_to_power(line[4], 600), 1)
+            lo.power_mode = "M4"
+            lo.priority = line[1]
+
+            # convert the color
+            lo.color = get_color_by_power(255-line[4], 300)
+
+            lo.add_polygon(points)
+
+            laser_objects.append(lo)
+
+        return laser_objects
+
+def convert_color_to_power(color, max_power):
+
+    min_power = 100
+
+    # The higher the color, the lesser the power
+    # So first substract from base 255
+    color = 255 - color
+
+    # Then calulate the percentage
+    percentage = color / 255
+
+    # take the delta power
+    delta = max_power - min_power
+
+    # that is the range, so we multiply the percentage by the delta
+    power = int(percentage * delta)
+
+    # and add the minimum power
+    power = power + min_power
+
+    return power
 
 def convert_path_to_points(path):
     # Regex pattern to match path commands and their parameters
@@ -1030,13 +1196,13 @@ def convert_process_to_cartesian(points, max_y = 0):
     return points
 
 
-def get_color_by_power(power):
+def get_color_by_power(power, relative_power = MAX_POWER):
 
     # How much percentage of the power is used
-    percentage_power = power / MAX_POWER
+    percentage_power = power / relative_power
 
-    # Then map that to a 128 value
-    parameter = int(128 * percentage_power)
+    # Then map that to a 192 value
+    parameter = int(192 * percentage_power)
 
     # And reverse it, the lower, the darker
     parameter = 255 - parameter

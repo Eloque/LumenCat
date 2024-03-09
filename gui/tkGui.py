@@ -78,6 +78,9 @@ class App(customtkinter.CTk):
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Curved text", command=self.creat_aoe)
         self.sidebar_button_1.grid(row=9, column=0, padx=20, pady=10)
 
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Death Knight", command=self.do_image)
+        self.sidebar_button_1.grid(row=10, column=0, padx=20, pady=10)
+
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame,
                                                                        values=["Light", "Dark", "System"],
                                                                        command=self.change_appearance_mode_event)
@@ -698,14 +701,18 @@ class App(customtkinter.CTk):
         x = 25
         y = 25
 
-        laser_object.add_circle(x+5, y+5, 25)
-        laser_object.add_circle(x+50+5+5, y+5, 25)
+#        laser_object.add_circle(x+5, y+5, 25)
+ #       laser_object.add_circle(x+50+5+5, y+5, 25)
 
         laser_object.priority = 10
 
-        cutout = LaserObject(speed, power, passes)
-        cutout.add_rounded_rectangle(50+5+2.5,25+5,100+15,50+10,5)
+        cutout = LaserObject(400, 600, 1)
+  #      cutout.add_rounded_rectangle(50+5+2.5,25+5,100+15,50+10,5)
 
+        # cutout.add_rounded_rectangle(49.5, 91.5, 49.5*2, 91.5*2, 5)
+
+        cutout = LaserObject(100, 950, 2)
+        cutout.add_rounded_rectangle(42/2, 38/2, 44, 40, 5)
         self.laser_project.laser_objects.append(cutout)
 
         # for i in range(0, 3):
@@ -716,7 +723,7 @@ class App(customtkinter.CTk):
 
         # laser_object.add_rounded_rectangle(80, 50+2.5, 160+10, 105+10, 5)
 
-        self.laser_project.laser_objects.append(laser_object)
+        #self.laser_project.laser_objects.append(laser_object)
 
         self.draw_all_elements()
         # Create a settings list, items of speed, power, passes
@@ -772,7 +779,8 @@ class App(customtkinter.CTk):
 
         # self.laser_project = predefined.base_room(points)
 
-        self.laser_project = predefined.half_way()
+        self.laser_project = predefined.corner_room()
+        self.laser_project.location = (50, 50)
 
         self.draw_all_elements()
 
@@ -798,6 +806,32 @@ class App(customtkinter.CTk):
 
        # self.laser_project = laser_project
         self.draw_all_elements()
+
+    def do_image(self):
+
+        self.laser_project = LaserProject()
+
+        laser_object = laserproject.LaserImageObject(2500, 100, 1)
+        los = laser_object.convert_file("small.bmp")
+
+        for lo in los:
+            self.laser_project.laser_objects.append(lo)
+
+        chain = LaserObject(100, 950, 5)
+        chain.add_circle(3, 50.5-3, 1)
+        chain.priority = -5
+        self.laser_project.laser_objects.append(chain)
+
+        co = LaserObject(100, 950, 5)
+        # co.add_rounded_rectangle(55/2, 101/2, 55, 101, 5)
+        co.add_rounded_rectangle(55 / 4, 101 / 4, 55/2, 101/2, 5)
+        co.priority = -10
+        #
+        self.laser_project.laser_objects.append(co)
+
+        self.draw_all_elements()
+
+        pass
 
 if __name__ == "__main__":
     app = App()

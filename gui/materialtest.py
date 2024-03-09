@@ -124,7 +124,7 @@ class MaterialTest:
         # convert all power values to integers
         power_values = [int(power) for power in power_values]
 
-        y = 6 + 2
+        y = 3 + 2
         x = 0
 
         text_power = 150
@@ -141,7 +141,8 @@ class MaterialTest:
             y += ( rectangle_size + 2 )
 
         y = 0
-        x = 12 - 1
+        x = 9 - 1
+
         for power in power_values:
             laser_object = LaserTextObject(power, "../fonts/Ubuntu-R.ttf", 8, text_speed, text_power, 1)
             laser_object.location = (x, y)

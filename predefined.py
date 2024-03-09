@@ -348,3 +348,67 @@ def aoe():
     laserproject.laser_objects.append(laserobject)
 
     return laserproject
+
+def corner_room():
+
+    # Create a corner room
+    laser_project = LaserProject()
+
+    laser_object = LaserObject(400, 600, 1)
+    laser_object.priority = 10
+
+    points= [[0,0],[0,5],[4,5],[4,1],[2,1],[2,4],[1,4],[1,0]]
+    points = scale_to_tile_size(points, 25)
+
+    laser_object.add_polygon(points)
+
+    traced = get_outlines_for_single_line(points)
+
+    traced_object = LaserObject(2500, 300, 1)
+    traced_object.add_polygon(traced)
+    traced_object.color = "red"
+
+    laser_project.laser_objects.append(traced_object)
+
+    outline_coords = get_cut_line_for_single_line(points)
+    laser_object.add_polygon(outline_coords)
+
+    laser_project.laser_objects.append(laser_object)
+
+    return laser_project
+
+def get_outlines_for_single_line(points):
+
+    # Create a polygon from the scaled points
+    original_polygon = Polygon(points)
+    buffer_distance = 5
+    buffered_polygon = original_polygon.buffer(buffer_distance, join_style=2)
+    buffered_polygon_coords = list(buffered_polygon.exterior.coords)
+
+    # remove the last point, so it's no longer closed
+    buffered_polygon_coords.pop()
+
+    # Create a LineString from the scaled points to represent the original polygon as a line
+    line = LineString(buffered_polygon_coords)
+    traced_line = line.buffer(5 / 2, cap_style=1, join_style=1)
+    traced_line_coords = list(traced_line.exterior.coords)
+
+    return traced_line_coords
+
+def get_cut_line_for_single_line(points):
+
+    # Close the original polygon
+    points.append(points[0])
+
+    # Draw around the original polygon
+    outline = Polygon(points).buffer(12.5, join_style=2)
+    outline_coords = list(outline.exterior.coords)
+
+    return outline_coords
+
+def scale_to_tile_size(points, tile_size):
+
+    # Multiply the points by the tile size for x
+    points = [[x * tile_size for x in point] for point in points]
+
+    return points
