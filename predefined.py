@@ -309,21 +309,84 @@ def half_way():
 def foldable():
 
     # Create a foldable box
-    laserproject = LaserProject()
-
-    laserobject = LaserObject(600, 250, 1)
-
-    laserobject.add_rectangle(0, 20, 20, 2)
-    laserobject.priority = 10
-    laserobject.fill()
-    laserproject.laser_objects.append(laserobject)
+    laser_project = LaserProject()
 
     boxoutline = LaserObject(400, 600, 1)
-    boxoutline.add_rectangle(0, 0, 20, 40)
+    foldline = LaserObject(400, 600, 1)
+    foldline.color = "red"
 
-    laserproject.laser_objects.append(boxoutline)
+    # boxoutline.add_rectangle(0, 0, 50, 50)
 
-    return laserproject
+    # Lets think about this functionality wise.
+    # we have the width, we have the height and lenght
+    x_size = 50
+    y_size = 30
+    z_size = 20
+
+    # The base box is width x length
+    points = [[0, 0], [0, y_size], [x_size, y_size], [x_size, 0], [0, 0]]
+    foldline.add_polygon(points)
+
+    # The front flap
+    points = [[0, 0], [0, -z_size]]
+    foldline.add_polygon(points)
+    points = [[x_size, 0], [x_size, -z_size]]
+    foldline.add_polygon(points)
+
+    points = [[0, -z_size], [x_size, -z_size]]
+    boxoutline.add_polygon(points)
+
+    # The side flap left
+    points = [[0, y_size], [-z_size/2, y_size+5], [-z_size/2, y_size+z_size-5], [0, y_size+z_size]]
+    boxoutline.add_polygon(points)
+
+    # The side flap right
+    points = [[x_size, y_size], [x_size+z_size/2, y_size+5], [x_size+z_size/2, y_size+z_size-5], [x_size, y_size+z_size]]
+    boxoutline.add_polygon(points)
+
+    # The side flap left
+    points = [[0, 0], [-z_size/2, -5], [-z_size/2, -z_size+5], [0, -z_size]]
+    boxoutline.add_polygon(points)
+
+    # And right
+    points = [[x_size, 0], [x_size+z_size/2, -5], [x_size+z_size/2, -z_size+5], [x_size, -z_size]]
+    boxoutline.add_polygon(points)
+
+    # The back flap
+    points = [[0, y_size], [0, y_size+z_size],[x_size, y_size+z_size], [x_size, y_size]]
+    foldline.add_polygon(points)
+
+    # The top
+    points = [[0, y_size+z_size], [0, y_size+z_size+y_size]]
+    boxoutline.add_polygon(points)
+    points = [[x_size, y_size+z_size], [x_size, y_size+z_size+y_size]]
+    boxoutline.add_polygon(points)
+
+    points = [[0, y_size+z_size+y_size], [x_size, y_size+z_size+y_size]]
+    foldline.add_polygon(points)
+
+    # The top lid
+    points = [[0, y_size+z_size+y_size], [5, y_size+z_size+y_size+10], [x_size-5, y_size+z_size+y_size+10], [x_size, y_size+z_size+y_size]]
+    boxoutline.add_polygon(points)
+
+    # The left flap
+    points = [[0, 0], [-z_size, 0], [-z_size, y_size], [0, y_size]]
+    boxoutline.add_polygon(points)
+
+    # The right flap
+    points = [[x_size, 0], [x_size+z_size, 0], [x_size+z_size, y_size], [x_size, y_size]]
+    boxoutline.add_polygon(points)
+
+    foldline.location = (20,20)
+    foldline.priority = -10
+    boxoutline.location = (20,20)
+
+    foldline.dot_the_lines()
+
+    laser_project.laser_objects.append(foldline)
+    laser_project.laser_objects.append(boxoutline)
+
+    return laser_project
 
 def aoe():
 

@@ -403,6 +403,25 @@ class LaserObject:
 
         return info
 
+    def dot_the_lines(self):
+
+    # For all the shapes I have, convert them into dotted lines.
+    # Make it so that each line is cut up into 2mm segments
+    # And then add those segments to the shapes list
+    # Create a whole new shapes list, to replace the old one
+
+        new_shapes = list()
+
+        for shape in self.shapes:
+
+            points = break_lines(shape.points, 2)
+
+            for line in points:
+                new_shape = Points(line, shape.fill, True)
+                new_shapes.append(new_shape)
+
+        self.shapes = new_shapes
+
     def translate(self, x, y ):
 
         x = self.location[0] + x
@@ -1475,3 +1494,30 @@ def curve_groups_around_circle(groups, center, radius):
         # For example, you could add the total angular width of the group to start_angle
 
     return all_curved_groups
+
+def break_lines(points, distance=2):
+    broken_lines = []
+
+    for i in range(len(points) - 1):
+        start = points[i]
+        end = points[i + 1]
+
+        # Vertical line
+        if start[0] == end[0]:
+            y_start = min(start[1], end[1])
+            y_end = max(start[1], end[1])
+
+            for y in range(y_start, y_end, distance*2):
+                if y + distance < y_end:
+                    broken_lines.append([[start[0], y], [start[0], y + distance]])
+
+        # Horizontal line
+        elif start[1] == end[1]:
+            x_start = min(start[0], end[0])
+            x_end = max(start[0], end[0])
+
+            for x in range(x_start, x_end, distance*2):
+                if x + distance < x_end:
+                    broken_lines.append([[x, start[1]], [x + distance, start[1]]])
+
+    return broken_lines
