@@ -253,8 +253,8 @@ class LaserProject:
                     # Set the speed and power
                     gcode.append("; Set speed and power")
                     gcode.append("; Turn laser on")
-                    gcode.append(speed)
-                    gcode.append(power)
+                    on_string = "%s %s %s" % (speed, power, "M3")
+                    gcode.append(on_string)
 
                     # Add the gcode to the list
                     gcode.extend(shape_gcode)
@@ -904,7 +904,7 @@ class LaserImageObject(LaserObject):
         super().__init__(speed, power, passes)
 
     # Open a file
-    def convert_file(self, filename):
+    def radconvert_file(self, filename):
 
         self.filename = filename
 
@@ -1015,12 +1015,14 @@ class LaserImageObject(LaserObject):
             # On a scale of
 
             # lo = LaserObject(2500, convert_color_to_power(line[4],300), 1)
-            lo = LaserObject(3000, convert_color_to_power(line[4], 600), 1)
+            # lo = LaserObject(3000, convert_color_to_power(line[4], 600), 1)
+            lo = LaserObject(3000, convert_color_to_power(line[4], 1000), 1)
             lo.power_mode = "M4"
             lo.priority = line[1]
 
             # convert the color
-            lo.color = get_color_by_power(255-line[4], 300)
+            # lo.color = get_color_by_power(255-line[4], 300)
+            lo.color = get_color_by_power(255 - line[4], 900)
 
             lo.add_polygon(points)
 
@@ -1030,7 +1032,7 @@ class LaserImageObject(LaserObject):
 
 def convert_color_to_power(color, max_power):
 
-    min_power = 100
+    min_power = 900
 
     # The higher the color, the lesser the power
     # So first substract from base 255
