@@ -2,6 +2,7 @@ import os
 
 import customtkinter
 
+import gameboxes
 import laserproject
 from CTkXYFrame import *
 
@@ -28,6 +29,7 @@ class App(customtkinter.CTk):
         # configure window
         self.title("LumenCat")
         self.geometry(f"{1500}x{1200}")
+
 
         # configure grid layout (3x2)
         self.grid_columnconfigure(1, weight=1)
@@ -86,6 +88,17 @@ class App(customtkinter.CTk):
 
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Import CSV", command=self.import_csv)
         self.sidebar_button_1.grid(row=11, column=0, padx=20, pady=10)
+
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Room", command=self.room)
+        self.sidebar_button_1.grid(row=12, column=0, padx=20, pady=10)
+
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Box", command=self.box)
+        self.sidebar_button_1.grid(row=13, column=0, padx=20, pady=10)
+
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, text="Card Box", command=self.cardbox)
+        self.sidebar_button_1.grid(row=14, column=0, padx=20, pady=10)
+
+
 
         self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame,
                                                                        values=["Light", "Dark", "System"],
@@ -229,6 +242,8 @@ class App(customtkinter.CTk):
         self.laser_project = LaserProject()
         self.laser_project.load_from_svg_file(filename)
 
+        self.draw_all_elements()
+
     def button_load_test_object(self):
 
         # Create LaserProject
@@ -371,12 +386,18 @@ class App(customtkinter.CTk):
         power = 800
         passes = 6
 
-        l = 7
+        # Trial 3
+        speed = 600
+        power = 850
+        passes = 16
+
+        l = 0
 
         # Create a LaserObject
         laser_object = LaserObject(speed, power, passes)
         laser_object.location = (l, l)
-        laser_object.add_circle(5, 5, 5)
+        #laser_object.add_circle(2, 2, 2)
+        laser_object.add_rounded_rectangle(35.5, 20, 70,39 )
 
         # Add the LaserObject to the LaserProject
         self.laser_project.laser_objects.append(laser_object)
@@ -386,14 +407,14 @@ class App(customtkinter.CTk):
         laser_object.add_circle(5, 5, 9)
 
         # Add the LaserObject to the LaserProject
-        self.laser_project.laser_objects.append(laser_object)
+        #self.laser_project.laser_objects.append(laser_object)
 
         laser_object = LaserObject(speed, power, passes)
         laser_object.location = (l, l)
         laser_object.add_circle(5, 5, 12)
 
         # Add the LaserObject to the LaserProject
-        self.laser_project.laser_objects.append(laser_object)
+        #self.laser_project.laser_objects.append(laser_object)
 
         # And draw all it
         self.draw_all_elements()
@@ -694,53 +715,36 @@ class App(customtkinter.CTk):
 
     def create_bases(self):
 
+        speed = 800
+        power = 850
+        passes = 20
+
         self.laser_project = LaserProject()
-
-        speed = 600
-        power = 850
-        passes = 8
-
-        speed = 600
-        power = 850
-        passes = 8
-
-        # Add a 50mm base
-        laser_object = LaserObject(speed, power, passes)
-        laser_object.location = (0, 0)
-
-        x = 25
-        y = 25
-
-#        laser_object.add_circle(x+5, y+5, 25)
- #       laser_object.add_circle(x+50+5+5, y+5, 25)
-
-        laser_object.priority = 10
-
-        # cutout = LaserObject(400, 600, 1)
         cutout = LaserObject(speed, power, passes)
-  #      cutout.add_rounded_rectangle(50+5+2.5,25+5,100+15,50+10,5)
 
-        # cutout.add_rounded_rectangle(49.5, 91.5, 49.5*2, 91.5*2, 5)
+        cutout.add_rounded_rectangle(25/2, 18/2, 25, 18, 3)
+        #cutout.add_rectangle(0, 0, 75, 50)
 
-        #cutout = LaserObject(100, 950, 2)
-        # cutout.add_rounded_rectangle(42/2, 38/2, 44, 40, 5)
-        cutout.add_rounded_rectangle(20/2, 17/ 2, 20, 17, 5)
+        lt = LaserTextObject("25 x 18", "../Ubuntu-R.ttf", 16, 1200, 250, 1)
+        lt.location = (3, 18/2 - 2)
+
+        # from bricks import generate_bricks, brick_to_path, generate_bricks_with_y_variation, generate_stones
+
+        # bricks = generate_bricks(0, 75, 0, 50, 10, 20, 6)
+        # bricks = generate_bricks_with_y_variation(0, 75, 0, 50, 10, 20, 6, 1, 2)
+
+        #bricks = generate_stones(75,50,50, 5, 5, 1)
+
+        #for brick in bricks:
+         #   path = brick_to_path(brick[0], brick[1])
+          #  cutout.add_polygon(path)
+
+        lt.priority = 20
+
         self.laser_project.laser_objects.append(cutout)
+        self.laser_project.laser_objects.append(lt)
 
-        laser_tobject = LaserTextObject("20 x 17", "../Ubuntu-R.ttf", 12, 600, 250, 1)
-        laser_tobject.location = (3, 7)
-        laser_tobject.priority = 10
-        #self.laser_project.laser_objects.append(laser_tobject)
 
-        # for i in range(0, 3):
-        #     laser_object.add_circle(x, y, 25)
-        #     laser_object.add_circle(x, y + 55, 25)
-        #
-        #     x += 55
-
-        # laser_object.add_rounded_rectangle(80, 50+2.5, 160+10, 105+10, 5)
-
-        #self.laser_project.laser_objects.append(laser_object)
 
         self.draw_all_elements()
         # Create a settings list, items of speed, power, passes
@@ -852,8 +856,41 @@ class App(customtkinter.CTk):
 
     def mdf_wall(self):
 
-        self.laser_project = predefined.cut_wall()
+        # self.laser_project = predefined.cut_wall()
 
+        laser_object = LaserObject(2500, 300, 1)
+
+        # we are making a 5 x 5 grid of tiles 25 mm apart
+        y = 0
+        x = 0
+        for i in range(0, 6):
+            laser_object.add_polygon([(x, y), (x + 125, y)])
+            laser_object.add_polygon([(y, x), (y , x+125)])
+            y += 25
+
+        cut_laser_object = LaserObject(800, 600, 1)
+        cut_laser_object.add_rectangle(-5, -5, 135, 135)
+        cut_laser_object.priority = -10
+
+        self.laser_project = LaserProject()
+        self.laser_project.laser_objects.append(laser_object)
+        self.laser_project.laser_objects.append(cut_laser_object)
+
+        self.draw_all_elements()
+
+    def room(self):
+
+        self.laser_project = predefined.room()
+        self.draw_all_elements()
+
+    def box(self):
+
+        self.laser_project = predefined.box()
+        self.draw_all_elements()
+
+    def cardbox(self):
+
+        self.laser_project = gameboxes.cardbox()
         self.draw_all_elements()
 
     def import_csv(self):

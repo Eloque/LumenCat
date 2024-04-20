@@ -5,8 +5,10 @@ import datetime
 # That would mean that there should be a class for SVG objects
 import xml.etree.ElementTree as elementTree
 
+import json
 import numpy as np
 from shapely import unary_union
+from svgelements import SVG
 
 from text import text_to_svg_path
 from curvetopoints import quadratic_bezier
@@ -23,6 +25,19 @@ class Points:
         self.fill = fill
         self.dotted = dotted
 
+    # Need a way to serialize and deserialize this object
+    def to_dict(self):
+
+        return {"points": self.points, "fill": self.fill, "dotted": self.dotted}
+
+    def from_dict(self, data):
+
+        self.points = data["points"]
+        self.fill = data["fill"]
+        self.dotted = data["dotted"]
+
+        return self
+
 
 # LaserProject is a collection of LaserObjects
 class LaserProject:
@@ -36,18 +51,66 @@ class LaserProject:
         # self.laser_mode = "M3" # M3 is constant power mode, M4 is PWM mode
 
     # Helper function, get a string representation of the SVG
-    @staticmethod
-    def load_from_svg_file(filename):
+    def load_from_svg_file(self, filename):
 
-        # Open the file
-        with open(filename, "r") as file:
-            # Read the file
-            svg = file.read()
+        all_paths_points = extract_points_from_svg_file(filename)
 
-            # Now we have the svg, we can parse it
-            print(svg)
+        new_points = list()
+        # the points are in mirror image, lets fix that
+        for path in all_paths_points:
+            path = [(x, 512 - y) for x, y in path]
+            new_points.append(path)
 
-        return svg
+        all_paths_points = new_points
+
+        factor = 818.677 / 216.60556
+        n = 1
+
+        laser_object_last = LaserObject(600, 850, 16)
+        lpoints = all_paths_points.pop()
+        lpoints = [(x / factor, y / factor) for x, y in lpoints]
+        laser_object_last.add_polygon(lpoints)
+
+        for path_index, points in enumerate(all_paths_points, start=1):
+
+            laser_object = LaserObject(1200, 150, 1)
+
+            # scale down the point by factor 10
+            points = [(x/factor, y/factor) for x, y in points]
+            laser_object.add_polygon(points)
+            laser_object.priority = n
+            n += 1
+
+            self.laser_objects.append(laser_object)
+
+        laser_object_last.priority = 0
+        self.laser_objects.append(laser_object_last)
+
+
+        laser_object_last_t = LaserObject(600, 850, 16)
+        laser_object_last_t.add_polygon(lpoints)
+
+        for path_index, points in enumerate(all_paths_points, start=1):
+
+            laser_object = LaserObject(800, 200, 1)
+
+            # scale down the point by factor 10
+            points = [(x/factor, y/factor) for x, y in points]
+            laser_object.add_polygon(points)
+            laser_object.priority = n
+            laser_object.location = (0, 138)
+            n += 1
+
+            self.laser_objects.append(laser_object)
+
+        laser_object_last_t.priority = 0
+        laser_object_last_t.location = (0, 138)
+        n += 1
+        self.laser_objects.append(laser_object_last_t)
+
+        return
+
+
 
     # Draw all the laser objects to a canvas
     def draw_laser_objects(self, canvas, scale_factor=1):
@@ -75,7 +138,7 @@ class LaserProject:
                     color = get_color_by_power(laser_object.power) if shape["fill"] else laser_object.color
 
                     line = canvas.create_line(current_point[0], current_point[1],
-                                              point[0], point[1], fill=color, width=3)
+                                              point[0], point[1], fill=color, width=1)
 
                     # add a tag to the line
                     canvas.addtag_withtag("laser_object", line)
@@ -396,6 +459,28 @@ class LaserObject:
         # This is the bounding box of the object, used to display the item when it is selected
         self.bounding_box = (0,0,0,0)
 
+    # save the shapes to json file
+    def save_shapes(self, filename):
+
+        shapes = list()
+
+        for shape in self.shapes:
+            shapes.append(shape.to_dict())
+
+        # Save the shapes to a file
+        with open(filename, "w") as file:
+            json.dump(shapes, file)
+
+    def load_shapes(self, filename):
+
+        # Load the shapes from a file
+        with open(filename, "r") as file:
+            shapes = json.load(file)
+
+        for shape in shapes:
+            new_shape = Points().from_dict(shape)
+            self.shapes.append(new_shape)
+
     def get_info(self):
 
         # create a string with the information, power, speed and passes
@@ -428,6 +513,38 @@ class LaserObject:
         y = self.location[1] + y
 
         self.location = (x, y)
+
+    def center(self):
+
+        # Go through all the coordinates in the shapes
+        # Find the max and min x and y
+        all_points = []
+        for shape in self.shapes:
+            # Get all the points
+            all_points += [point for point in shape.points]
+
+        # Find the max and min x and y
+        max_x = max([x for x, y in all_points])
+        min_x = min([x for x, y in all_points])
+        max_y = max([y for x, y in all_points])
+        min_y = min([y for x, y in all_points])
+
+        # Calculate the center of the bounding box
+        center_x = (max_x - min_x) / 2
+        center_y = (max_y - min_y) / 2
+
+        # Calculate the offset
+        offset_x = min_x - center_x
+        offset_y = min_y - center_y
+
+        # self.add_polygon([[min_x, min_y], [max_x, max_y]])
+        # self.add_polygon([[min_x, max_y], [max_x, min_y]])
+        # self.add_polygon([[center_x, min_y], [center_x, 20]])
+
+#        self.add_rectangle(min_x, min_y, max_x - min_x, max_y - min_y)
+
+        # Translate the object
+        self.translate(offset_x, offset_y)
 
     def get_cartesian_points_as_lists(self):
 
@@ -653,6 +770,8 @@ class LaserObject:
         step_size = 0.25
         step_size = 0.085
         # step_size = 0.1
+
+        step_size = 0.15
 
         # Get all the points
         for shape in self.shapes:
@@ -1523,3 +1642,82 @@ def break_lines(points, distance=2):
                     broken_lines.append([[x, start[1]], [x + distance, start[1]]])
 
     return broken_lines
+
+
+import xml.etree.ElementTree as ET
+# from svgpathtools import parse_path
+
+
+def old_extract_points_from_svg_file(svg_file_path):
+    # Parse the SVG file
+    tree = ET.parse(svg_file_path)
+    root = tree.getroot()
+
+    # Namespace handling for SVG files
+    namespaces = {'svg': 'http://www.w3.org/2000/svg'}
+
+    # Initialize a list to store lists of points from each path
+    all_paths_points = []
+
+    # Find all path elements and their 'd' attribute
+    for path_element in root.findall('.//svg:path', namespaces):
+        path_data = path_element.attrib['d']
+
+        # Parse the path data to get path object
+        path = parse_path(path_data)
+
+        # Extract points from each segment of the path
+        path_points = []
+        for segment in path:
+            start_point = (segment.start.real, segment.start.imag)
+            if not path_points or path_points[-1] != start_point:  # Avoid duplicating consecutive points
+                path_points.append(start_point)
+
+            end_point = (segment.end.real, segment.end.imag)
+            if end_point != start_point:  # Add end point if different from start point
+                path_points.append(end_point)
+
+        # Add the points from this path to the list of all paths' points
+        all_paths_points.append(path_points)
+
+    return all_paths_points
+
+
+from svgelements import SVG, Move, Line, Close, Path, CubicBezier, QuadraticBezier
+
+
+def extract_points_from_svg_file(svg_file_path):
+    svg = SVG.parse(svg_file_path)
+    all_paths_points = []  # Store all paths points, with each path's points as a sublist
+
+    for element in svg.elements():
+        if isinstance(element, Path):
+            element = Path(element)  # Ensure it's a Path object, applying any transformations
+            element *= element.transform
+
+            subpath_points = []  # To hold points for the current subpath
+            for seg in element:
+                # Move commands indicate the start of a new subpath
+                if isinstance(seg, Move):
+                    if subpath_points:  # Save the previous subpath if it exists
+                        all_paths_points.append(subpath_points)
+                        subpath_points = []
+                    if seg.end is not None:  # Add the move-to point as the start of a new subpath
+                        subpath_points.append((seg.end.x, seg.end.y))
+                elif isinstance(seg, Line) or isinstance(seg, Close):
+                    if seg.end is not None:
+                        subpath_points.append((seg.end.x, seg.end.y))
+                elif isinstance(seg, CubicBezier) or isinstance(seg, QuadraticBezier):
+                    # For curves, add start and end points. Consider adding control points or more detailed curve approximation.
+                    if seg.start is not None:
+                        subpath_points.append((seg.start.x, seg.start.y))
+                    if seg.end is not None:
+                        subpath_points.append((seg.end.x, seg.end.y))
+                # Additional segment types (e.g., arcs) can be handled here with specific logic
+
+            # After processing all segments, save any final subpath points
+            if subpath_points:
+                all_paths_points.append(subpath_points)
+
+    return all_paths_points
+

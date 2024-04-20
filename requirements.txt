@@ -29,3 +29,4 @@ ttkthemes
 urllib3
 wxPython
 shapely
+svgelements
